@@ -3,6 +3,24 @@ from typing import Sequence
 from random import randint
 from abc import abstractmethod
 
+class Basket:
+
+    pos: Sequence[int]
+
+    def __init__(self):
+        self.pos = []
+
+    def new(self, npos: int):
+        self.pos.append(npos)
+
+    def delete(self, npos: int):
+        self.pos.remove(npos)
+
+    @abstractmethod
+    def collision(self, snake_pos: int) -> bool:
+        if self.pos.index(snake_pos):
+            return True
+        return False
 
 class Environment:
     
