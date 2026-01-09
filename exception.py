@@ -33,3 +33,16 @@ class WindowToLarge(CriticalException):
 class UnknowCharInMap(CriticalException):
     def __init__(self):
         super().__init__(UNKNOWN_CHAR_IN_MAP)
+
+
+#-------------------------------------------#
+#         --FUNCTIONNAL EXCEPTION--         #
+#-------------------------------------------#
+
+class SnakeLoose(FunctionalException):
+    def __init__(self):
+        super().__init__()
+
+class SnakeWin(FunctionalException):
+    def __init__(self):
+        super().__init__()

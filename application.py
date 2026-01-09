@@ -1,6 +1,7 @@
 import tkinter
 
 from typing import Sequence, List
+from time import sleep
 
 from environment import Environment
 from logger import logger
@@ -8,6 +9,7 @@ from exception import (
     WindowToLarge,
     UnknowCharInMap
 )
+from enumeration import Movement
 
 class Square():
 
@@ -16,17 +18,22 @@ class Square():
 
     color: str
 
-    def __init__(self, size: int, a_pos: List[int], color: str):
+    ID:int
+
+    def __init__(self, canvas: tkinter.Canvas, size: int, a_pos: List[int], color: str):
         self.size = size
         self.a_pos = a_pos
         self.color = color
-
-    def draw(self, canvas: tkinter.Canvas):
-        canvas.create_rectangle(
+        self.ID = canvas.create_rectangle(
             self.a_pos[0], self.a_pos[1],
             self.a_pos[0] + self.size, self.a_pos[1] + self.size, 
             fill=self.color
         )
+
+    def draw(self, canvas: tkinter.Canvas):
+        canvas.itemconfig(self.ID, fill=self.color)
+        
+
 
 class Grid(tkinter.Canvas):
 
@@ -36,7 +43,6 @@ class Grid(tkinter.Canvas):
     objects: Sequence[Square]
 
     CASE_SIZE = 20
-    PADDING = 5
 
     EVEN_COLOR = "DarkKhaki"
     GREEN_APPEL_COLOR = "Chartreuse"
@@ -44,7 +50,7 @@ class Grid(tkinter.Canvas):
     RED_APPLE_COLOR = "Tomato"
     SNAKE_HEAD_COLOR = "DarkBlue"
     SNAKE_BODY_COLOR = "CornflowerBlue"
-    WALL_COLOR = "Black"
+    WALL_COLOR = "DarkGreen"
  
     def __init__(self, window: tkinter.Tk, env_width: int, env_height: int):
         self.width = env_width * self.CASE_SIZE + 2
@@ -58,7 +64,6 @@ class Grid(tkinter.Canvas):
             highlightthickness=0
         )
         self.pack()
-        self.place(x=self.PADDING, y=self.PADDING)
         a_pos: List[int] = [0, 0]
         self.objects = []
         for i in range(env_width * env_height):
@@ -70,19 +75,99 @@ class Grid(tkinter.Canvas):
 
             self.objects.append(
                 Square(
+                    self,
                     self.CASE_SIZE,
                     a_pos.copy(),
-                    "default"
+                    "black"
                 )
             )
 
-
     def draw(self):
-        i = 0
-        while i < 375:
+        for i in range(len(self.objects)):
             self.objects[i].draw(self)
-            i += 1
 
+class Menu(tkinter.Canvas):
+
+    width: int
+    height: int
+
+    human_frame: tkinter.Frame
+    human_button: tkinter.Button
+    ia_frame: tkinter.Frame
+    ia_button: tkinter.Button
+
+    BUTTON_WIDTH = 100
+    BUTTON_HEIGHT = 25
+
+    COLOR_ACTIVATE_BUTTON = "Ivory"
+    COLOR_DEACTIVATE_BUTTON = "DarkGrey"
+
+
+
+    def __init__(self, window: tkinter.Tk, menu_width: int, menu_height: int):
+        self.width = menu_width
+        self. height = menu_height
+        super().__init__(
+            window, 
+            width=self.width,
+            height=self.height,
+            bg="ivory",
+            bd=0,
+            highlightthickness=0
+        )
+        self.pack()
+
+        self.human_button = None
+        self.human_frame = None
+        self.ia_button = None
+        self.ia_frame = None
+        
+    def create_human_start_button(self, cmd_fnc:callable):
+        self.human_frame = tkinter.Frame(
+            self,
+            width=self.BUTTON_WIDTH,
+            height=self.BUTTON_HEIGHT,
+        )
+        self.human_frame.pack_propagate(False)
+        self.human_frame.pack()
+        self.human_button = tkinter.Button(
+            self.human_frame,
+            text="Start Human",
+            command=cmd_fnc,
+            bg=self.COLOR_ACTIVATE_BUTTON
+        )
+        self.human_button.pack(fill="both", expand=True, side="left")
+        
+    def create_ia_start_button(self, cmd_fnc:callable):
+        self.ia_frame = tkinter.Frame(
+            self,
+            width=self.BUTTON_WIDTH,
+            height=self.BUTTON_HEIGHT,
+        )
+        self.ia_frame.pack_propagate(False)
+        self.ia_frame.pack()
+        self.ia_button = tkinter.Button(
+            self.ia_frame,
+            text="Start IA",
+            command=cmd_fnc,
+            bg=self.COLOR_ACTIVATE_BUTTON
+        )
+        self.ia_button.pack(fill="both", expand=True, side="left")
+
+    def deactivate_start_buttons(self):
+        self.human_button.configure(
+            command=self.do_nothing,
+            bg=self.COLOR_DEACTIVATE_BUTTON,
+            activebackground=self.COLOR_DEACTIVATE_BUTTON
+        )
+        self.ia_button.configure(
+            command=self.do_nothing,
+            bg=self.COLOR_DEACTIVATE_BUTTON,
+            activebackground=self.COLOR_DEACTIVATE_BUTTON
+        )
+
+    def do_nothing(self):
+        pass
 
 class Application(tkinter.Tk):
 
@@ -92,9 +177,18 @@ class Application(tkinter.Tk):
     env: Environment
 
     game_grid: Grid
+    menu: Menu
 
     TITLE = "Learn2Slither"
-    WHITE_SPACE = 150
+
+    GAME_SPEED = 200
+
+    GRID_T_PADDING = 5
+    GRID_L_PADDING = 5
+    MENU_SIZE = 150
+    MENU_T_PADDING = 10
+    MENU_L_PADDING = 5
+    WHITE_SPACE = MENU_SIZE + MENU_T_PADDING * 2
 
     def __init__(self, game_env: Environment):
 
@@ -104,9 +198,10 @@ class Application(tkinter.Tk):
         self.env = game_env
 
         self.game_grid = Grid(self, self.env.width, self.env.height)
+        self.game_grid.place(x=self.GRID_L_PADDING, y=self.GRID_T_PADDING)
         
-        self.width: int = self.game_grid.width + self.game_grid.PADDING * 2
-        self.height: int = self.game_grid.height + self.game_grid.PADDING + self.WHITE_SPACE
+        self.width: int = self.game_grid.width + self.GRID_L_PADDING * 2
+        self.height: int = self.game_grid.height + self.GRID_T_PADDING + self.WHITE_SPACE
 
         if self.winfo_screenwidth() < self.width or self.winfo_screenheight() < self.height:
             raise WindowToLarge()
@@ -114,8 +209,16 @@ class Application(tkinter.Tk):
         self.minsize(width=self.width, height=self.height)
         self.maxsize(width=self.width, height=self.height)
         self.update_grid()
-        self.game_grid.draw()
+        self.game_grid.draw()   
         logger.info(f"Window size: w:{self.width}, h:{self.height}")
+
+        self.menu = Menu(self, self.game_grid.width, self.MENU_SIZE)
+        MENU_Y_START:int = self.GRID_L_PADDING + self.game_grid.height + self.MENU_T_PADDING
+        self.menu.place(x=self.MENU_L_PADDING, y=MENU_Y_START)
+        self.menu.create_human_start_button(self.game_human_loop)
+        self.menu.create_ia_start_button(self.game_ia_loop)
+
+        self.bind('<Key>', self.key_handler)
 
     def update_grid(self):
         for i in range(len(self.env.map)):
@@ -138,6 +241,27 @@ class Application(tkinter.Tk):
                 case _:
                     raise UnknowCharInMap()
 
+    def key_handler(self, event: tkinter.Event):
+        pressed_key: str = event.keysym
+        
+        if pressed_key == "Up":
+            self.env.change_move(Movement.UP)
+        elif pressed_key == "Down":
+            self.env.change_move(Movement.DOWN)
+        elif pressed_key == "Left":
+            self.env.change_move(Movement.LEFT)
+        elif pressed_key == "Right":
+            self.env.change_move(Movement.RIGHT)
+
+    def game_ia_loop(self):
+        pass
+
+    def game_human_loop(self):
+        self.menu.deactivate_start_buttons()
+        self.env.update()
+        self.update_grid()
+        self.game_grid.draw()
+        self.game_grid.after(self.GAME_SPEED, self.game_human_loop)
 
     def launch(self):
         self.mainloop()
