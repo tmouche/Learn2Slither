@@ -95,6 +95,8 @@ class Menu(tkinter.Canvas):
     human_button: tkinter.Button
     ia_frame: tkinter.Frame
     ia_button: tkinter.Button
+    step_frame: tkinter.Frame
+    step_button: tkinter.Button
 
     BUTTON_WIDTH = 100
     BUTTON_HEIGHT = 25
@@ -121,6 +123,11 @@ class Menu(tkinter.Canvas):
         self.human_frame = None
         self.ia_button = None
         self.ia_frame = None
+        self.step_button = None
+        self.step_frame = None
+        self.next_step_button = None
+        self.next_step_frame = None
+
         
     def create_human_start_button(self, cmd_fnc:callable):
         self.human_frame = tkinter.Frame(
@@ -154,6 +161,38 @@ class Menu(tkinter.Canvas):
         )
         self.ia_button.pack(fill="both", expand=True, side="left")
 
+    def create_switch_step_button(self, cmd_fnc: callable):
+        self.step_frame = tkinter.Frame(
+            self,
+            width=self.BUTTON_WIDTH,
+            height=self.BUTTON_HEIGHT
+        )
+        self.step_frame.pack_propagate(False)
+        self.step_frame.pack()
+        self.step_button = tkinter.Button(
+            self.step_frame,
+            text="Switch to Step",
+            command=cmd_fnc,
+            bg=self.COLOR_ACTIVATE_BUTTON
+        )
+        self.step_button.pack(fill="both", expand=True, side="left")
+
+    def create_next_step_button(self, cmd_fnc: callable):
+        self.next_step_frame = tkinter.Frame(
+            self,
+            width=self.BUTTON_WIDTH,
+            height=self.BUTTON_HEIGHT
+        )
+        self.next_step_frame.pack_propagate(False)
+        self.next_step_frame.pack()
+        self.next_step_button = tkinter.Button(
+            self.next_step_frame,
+            text="Next Step",
+            command=cmd_fnc,
+            bg=self.COLOR_ACTIVATE_BUTTON
+        )
+        self.next_step_button.pack(fill="both", expand=True, side="left")
+
     def deactivate_start_buttons(self):
         self.human_button.configure(
             command=self.do_nothing,
@@ -179,6 +218,8 @@ class Application(tkinter.Tk):
     game_grid: Grid
     menu: Menu
 
+    step_mode: bool
+
     TITLE = "Learn2Slither"
 
     GAME_SPEED = 200
@@ -197,6 +238,8 @@ class Application(tkinter.Tk):
 
         self.env = game_env
 
+        self.step_mode = False
+
         self.game_grid = Grid(self, self.env.width, self.env.height)
         self.game_grid.place(x=self.GRID_L_PADDING, y=self.GRID_T_PADDING)
         
@@ -210,13 +253,14 @@ class Application(tkinter.Tk):
         self.maxsize(width=self.width, height=self.height)
         self.update_grid()
         self.game_grid.draw()   
-        logger.info(f"Window size: w:{self.width}, h:{self.height}")
 
         self.menu = Menu(self, self.game_grid.width, self.MENU_SIZE)
         MENU_Y_START:int = self.GRID_L_PADDING + self.game_grid.height + self.MENU_T_PADDING
         self.menu.place(x=self.MENU_L_PADDING, y=MENU_Y_START)
         self.menu.create_human_start_button(self.game_human_loop)
         self.menu.create_ia_start_button(self.game_ia_loop)
+        self.menu.create_switch_step_button(self.switch_step)
+        self.menu.create_next_step_button(self.update)
 
         self.bind('<Key>', self.key_handler)
 
@@ -245,22 +289,34 @@ class Application(tkinter.Tk):
         pressed_key: str = event.keysym
         
         if pressed_key == "Up":
-            self.env.change_move(Movement.UP)
+            self.env.store_move(Movement.UP)
         elif pressed_key == "Down":
-            self.env.change_move(Movement.DOWN)
+            self.env.store_move(Movement.DOWN)
         elif pressed_key == "Left":
-            self.env.change_move(Movement.LEFT)
+            self.env.store_move(Movement.LEFT)
         elif pressed_key == "Right":
-            self.env.change_move(Movement.RIGHT)
+            self.env.store_move(Movement.RIGHT)
+
+    def switch_step(self):
+        self.step_mode = True if self.step_mode == False else False
+
+    def update(self):
+        try:
+            self.env.update()
+        except Exception as exc:
+            logger.info(f"Game Finished: {exc}")
+            self.destroy()
+            return 
+        self.update_grid()
+        self.game_grid.draw()
 
     def game_ia_loop(self):
-        pass
+        self
 
     def game_human_loop(self):
         self.menu.deactivate_start_buttons()
-        self.env.update()
-        self.update_grid()
-        self.game_grid.draw()
+        if self.step_mode == False:
+            self.update()
         self.game_grid.after(self.GAME_SPEED, self.game_human_loop)
 
     def launch(self):
