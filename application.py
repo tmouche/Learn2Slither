@@ -289,13 +289,13 @@ class Application(tkinter.Tk):
         pressed_key: str = event.keysym
         
         if pressed_key == "Up":
-            self.env.store_move(Movement.UP)
+            self.env.change_move(Movement.UP)
         elif pressed_key == "Down":
-            self.env.store_move(Movement.DOWN)
+            self.env.change_move(Movement.DOWN)
         elif pressed_key == "Left":
-            self.env.store_move(Movement.LEFT)
+            self.env.change_move(Movement.LEFT)
         elif pressed_key == "Right":
-            self.env.store_move(Movement.RIGHT)
+            self.env.change_move(Movement.RIGHT)
 
     def switch_step(self):
         self.step_mode = True if self.step_mode == False else False
@@ -308,10 +308,16 @@ class Application(tkinter.Tk):
             self.destroy()
             return 
         self.update_grid()
+        self._print_map(self.env.snake_vision_map, self.env.s_width)
         self.game_grid.draw()
 
     def game_ia_loop(self):
-        self
+        self.menu.deactivate_start_buttons()
+        if self.step_mode == False:
+            # action = self.agent.take_action()
+            # self.env.change_move(action)
+            self.update()
+
 
     def game_human_loop(self):
         self.menu.deactivate_start_buttons()
@@ -321,4 +327,14 @@ class Application(tkinter.Tk):
 
     def launch(self):
         self.mainloop()
+
+    def _print_map(self, map: Sequence[str], width:int):
+        logger.info('\n')
+        for i in range(len(map)):
+            print(map[i],end="")
+            if not (i+1) % width and i:
+                print()
+        print()
+
+
     
