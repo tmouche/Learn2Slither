@@ -97,7 +97,9 @@ class Menu(tkinter.Canvas):
     ia_button: tkinter.Button
     step_frame: tkinter.Frame
     step_button: tkinter.Button
-
+    switch_visual_frame: tkinter.Frame
+    switch_visual_button: tkinter.Button
+    
     BUTTON_WIDTH = 100
     BUTTON_HEIGHT = 25
 
@@ -119,14 +121,16 @@ class Menu(tkinter.Canvas):
         )
         self.pack()
 
-        self.human_button = None
         self.human_frame = None
-        self.ia_button = None
+        self.human_button = None
         self.ia_frame = None
-        self.step_button = None
+        self.ia_button = None
         self.step_frame = None
-        self.next_step_button = None
+        self.step_button = None
         self.next_step_frame = None
+        self.next_step_button = None
+        self.switch_visual_button = None
+        self.switch_visual_frame = None
 
         
     def create_human_start_button(self, cmd_fnc:callable):
@@ -193,6 +197,22 @@ class Menu(tkinter.Canvas):
         )
         self.next_step_button.pack(fill="both", expand=True, side="left")
 
+    def create_switch_visual_button(self, cmd_fnc: callable):
+        self.switch_visual_frame = tkinter.Frame(
+            self,
+            width=self.BUTTON_WIDTH,
+            height=self.BUTTON_HEIGHT
+        )
+        self.switch_visual_frame.pack_propagate(False)
+        self.switch_visual_frame.pack()
+        self.switch_visual_button = tkinter.Button(
+            self.switch_visual_frame,
+            text="Switch visual",
+            command=cmd_fnc,
+            bg=self.COLOR_ACTIVATE_BUTTON
+        )
+        self.switch_visual_button.pack(fill="both", expand=True, side="left")
+
     def deactivate_start_buttons(self):
         self.human_button.configure(
             command=self.do_nothing,
@@ -219,10 +239,12 @@ class Application(tkinter.Tk):
     menu: Menu
 
     step_mode: bool
+    visual_mode: bool
 
     TITLE = "Learn2Slither"
 
-    GAME_SPEED = 200
+    GAME_SPEED_VISUAL = 200
+    GAME_SPEED_NO_VISUAL = 1
 
     GRID_T_PADDING = 5
     GRID_L_PADDING = 5
@@ -239,6 +261,7 @@ class Application(tkinter.Tk):
         self.env = game_env
 
         self.step_mode = False
+        self.visual_mode = True
 
         self.game_grid = Grid(self, self.env.width, self.env.height)
         self.game_grid.place(x=self.GRID_L_PADDING, y=self.GRID_T_PADDING)
@@ -261,6 +284,7 @@ class Application(tkinter.Tk):
         self.menu.create_ia_start_button(self.game_ia_loop)
         self.menu.create_switch_step_button(self.switch_step)
         self.menu.create_next_step_button(self.update)
+        self.menu.create_switch_visual_button(self.switch_visual)
 
         self.bind('<Key>', self.key_handler)
 
@@ -300,6 +324,9 @@ class Application(tkinter.Tk):
     def switch_step(self):
         self.step_mode = True if self.step_mode == False else False
 
+    def switch_visual(self):
+        self.visual_mode = True if self.step_mode == False else False
+
     def update(self):
         try:
             self.env.update()
@@ -308,8 +335,10 @@ class Application(tkinter.Tk):
             self.destroy()
             return 
         self.update_grid()
-        self._print_map(self.env.snake_vision_map, self.env.s_width)
-        self.game_grid.draw()
+        self._print_map(self.env.snake_view(), self.env.width)
+        logger.info(self.env.actual_move.name)
+        if self.visual_mode:
+            self.game_grid.draw()
 
     def game_ia_loop(self):
         self.menu.deactivate_start_buttons()
@@ -317,13 +346,15 @@ class Application(tkinter.Tk):
             # action = self.agent.take_action()
             # self.env.change_move(action)
             self.update()
-
+        refresh_rate:int = self.GAME_SPEED_VISUAL if self.visual_mode else self.GAME_SPEED_NO_VISUAL
+        self.game_grid.after(refresh_rate, self.game_human_loop)
 
     def game_human_loop(self):
         self.menu.deactivate_start_buttons()
         if self.step_mode == False:
             self.update()
-        self.game_grid.after(self.GAME_SPEED, self.game_human_loop)
+        refresh_rate:int = self.GAME_SPEED_VISUAL if self.visual_mode else self.GAME_SPEED_NO_VISUAL
+        self.game_grid.after(refresh_rate, self.game_human_loop)
 
     def launch(self):
         self.mainloop()

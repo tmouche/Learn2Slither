@@ -22,12 +22,20 @@ class Snake:
 
     size: int
 
+    START_POS: int
+    START_SIZE: int
 
     def __init__(self, start_pos: int, start_size: int):
+        self.START_POS = start_pos
+        self.START_SIZE = start_size
+        self.reset()
+        
+
+    def reset(self):
         self.pos = deque()
-        for i in range(start_size):
-            self.pos.append(start_pos)
-        self.size = start_size
+        for _ in range(self.START_SIZE):
+            self.pos.append(self.START_POS)
+        self.size = self.START_SIZE
 
     def increase(self):
         self.pos.append(self.pos[-1])
@@ -57,6 +65,10 @@ class Basket:
     pos: List[int]
 
     def __init__(self):
+        self.pos = None
+        self.reset()
+
+    def reset(self):
         self.pos = []
 
     def new(self, npos: int):
@@ -75,11 +87,8 @@ class Environment:
     
     width:int
     height:int
-    s_width: int
-    s_height: int
 
     map: List[str]
-    snake_vision_map: List[str]
 
     green_apple: Basket
     red_apple: Basket
@@ -111,20 +120,18 @@ class Environment:
         elif w <= 5 or h <= 5:
             raise MapToSmall()
 
-        self.width = w
-        self.height = h
-        self.s_width = w + 2
-        self.s_height = h + 2
+        self.width = w + 2
+        self.height = h + 2
 
-        self.map = ['O' for _ in range(self.width * self.height)]
+        self.game_ground_size = self.width*self.height - (2*self.width) - (2*self.height) - 8
         self.__init_map_move()
-        self.game_ground_size = len(self.map) - (2*self.width) - (2*self.height) - 4
+        
+        self.map = ['O' for _ in range(self.width * self.height)]
 
         self.green_apple = Basket()
         self.red_apple = Basket()
-        self.snake = Snake(start_pos=self._calc_snake_first_pos(w, h), start_size=self.START_SNAKE)
+        self.snake = Snake(start_pos=self._calc_snake_first_pos(), start_size=self.START_SNAKE)
 
-        self._update_snake_map()
         self.actual_move = self.START_MOVE
         self.move_counted = True
 
@@ -136,6 +143,7 @@ class Environment:
             self.new_red_apple()
         self._update_map()
 
+
     def __init_map_move(self):
         self.map_move = {}
         self.map_move[Movement.UP] = -self.width
@@ -143,13 +151,31 @@ class Environment:
         self.map_move[Movement.LEFT] = -1
         self.map_move[Movement.RIGHT] = 1
 
+    def reset(self):
+        self.map = ['O' for _ in range(self.width * self.height)]
+
+        self.green_apple.reset()
+        self.red_apple.reset()
+        self.snake.reset()
+
+        self.actual_move = self.START_MOVE
+        self.move_counted = True
+
+        self.step = 0
+
+        for _ in range(self.START_GA):
+            self.new_green_apple()
+        for _ in range(self.START_RA):
+            self.new_red_apple()
+        self._update_map()
+
+
     def update(self):
         self.step += 1
         self.move()
         self.move_counted = True
         self.check_snake_collision()
         self._update_map()
-        self._update_snake_map()
 
     def _update_map(self):
         for i in range(len(self.map)):
@@ -166,33 +192,6 @@ class Environment:
                 self.map[i] = 'W'
             else:
                 self.map[i] = 'O'
-
-    def _update_snake_map(self):
-        s_size: int = self.s_width * self.s_height
-
-        self.snake_vision_map = ['x' for _ in range(s_size)]
-        snake_head_pos: int = self._calc_snake_first_pos(self.s_width, self.s_height)
-        self.snake_vision_map[snake_head_pos] = 'H'
-        left = right = up = down = snake_head_pos
-        while True:
-            count: List[int] = [0]
-            left = self._check_pos_snake_map(left, -1, count)
-            right = self._check_pos_snake_map(right, 1, count)
-            up = self._check_pos_snake_map(up, -self.s_width, count)
-            down = self._check_pos_snake_map(down, self.s_width, count)
-            if not sum(count):
-                break
-                
-    def _check_pos_snake_map(self, last_pos: int, move: int, count: List[int]) -> int:
-        if self.snake_vision_map[last_pos] != 'W':
-            temp_pos: int = last_pos + move
-            if self.is_wall(temp_pos) == True:
-                self.snake_vision_map[temp_pos] = 'W'
-            else:
-                self.snake_vision_map[temp_pos] = self.map[temp_pos]
-            last_pos = temp_pos
-            count.append(1)
-        return last_pos
 
     def move(self):
         coef_move: int = self.map_move[self.actual_move]
@@ -260,8 +259,19 @@ class Environment:
         self.red_apple.pos.append(next_pos)
 
     def snake_view(self) -> List[str]:
-        return self.snake_vision_map
+        vision: List[str] = []
+        s_head: int = self.snake.pos[0]
+        s_head_row: int = s_head // self.width
+        s_head_column: int = s_head % self.width
+        for i in range(len(self.map)):
+            i_row: int = i // self.width
+            i_column: int = i % self.width
+            if i_row == s_head_row or i_column == s_head_column:
+                vision.append(self.map[i])
+            else:
+                vision.append(' ')
+        return vision
     
-    def _calc_snake_first_pos(self, weight:int, height:int) -> int:
-        return int(weight*(height-1)+weight/2)
+    def _calc_snake_first_pos(self) -> int:
+        return int(self.width * self.height / 2) + self.width / 2
     

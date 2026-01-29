@@ -1,7 +1,11 @@
 from enum import Enum
 
 class Movement(Enum):
-    UP = 1,
-    DOWN = 2,
-    LEFT = 3,
-    RIGHT = 4
+    UP = 0,
+    DOWN = 1,
+    LEFT = 2,
+    RIGHT = 3
+
+class Mode(Enum):
+    TRAIN = 0,
+    TEST = 1
