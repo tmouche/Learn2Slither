@@ -12,7 +12,9 @@ from exception import (
     MapToLarge,
     MapToSmall,
     SnakeLoose,
-    SnakeWin
+    SnakeWin,
+    SnakeGreenApple,
+    SnakeRedApple
 )
 
 
@@ -175,7 +177,6 @@ class Environment:
         self.move()
         self.move_counted = True
         self.check_snake_collision()
-        self._update_map()
 
     def _update_map(self):
         for i in range(len(self.map)):
@@ -198,9 +199,9 @@ class Environment:
         next_pos:int = self.snake.pos[0] + coef_move
         self.snake.moove(next_pos)
 
-    def change_move(self, next_move: Movement):
-        if (self.map_move[self.actual_move] + self.map_move[next_move] 
-            and self.move_counted == True):
+    def change_move(self, next_move: Movement, from_ia: bool = False):
+        if ((self.map_move[self.actual_move] + self.map_move[next_move] 
+            and self.move_counted == True) or from_ia == True):
             self.actual_move = next_move
             self.move_counted = False
 
@@ -212,19 +213,22 @@ class Environment:
                 raise SnakeWin()
             self.green_apple.delete(pos_to_check)
             self.new_green_apple()
+            self._update_map()
+            raise SnakeGreenApple()
         elif self.red_apple.collision(pos_to_check) is True:
             self.snake.decrease()
             if not self.snake.size:
-                logger.debug("Red Apple")
-                raise SnakeLoose()
+                raise SnakeLoose("Red apple")
             self.red_apple.delete(pos_to_check)
             self.new_red_apple()
+            self._update_map()
+            raise SnakeRedApple()
         elif self.is_wall(pos_to_check) is True:
-            logger.debug("Wall")
-            raise SnakeLoose()
+            raise SnakeLoose("Wall")
         elif self.snake.collision(pos_to_check, exclude_head=True) is True and self.step > self.START_SNAKE:
-            logger.debug("Snake")
-            raise SnakeLoose()
+            raise SnakeLoose("Snake's tail")
+        else:
+            self._update_map()
 
     def check_collision(self, next_pos:int) -> bool:
         if (

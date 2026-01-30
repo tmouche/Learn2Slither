@@ -1,4 +1,5 @@
 
+from abc import abstractmethod
 from enumeration import Movement
 from environment import Environment
 from exception import SnakeWin
@@ -7,8 +8,6 @@ from typing import List, Dict
 from utils import norm
 
 class Agent:
-
-    
 
     _env: Environment
 
@@ -38,8 +37,12 @@ class Agent:
         self.EXPLO_DECAY = e_decay
         self.MAX_ACTION = max_action
 
+    @abstractmethod
+    def train():
+        pass
 
-    def _retrieve_state_from_env(self):
+
+    def _retrieve_state_from_env(self) -> List[float]:
         state: List[str] = self._env.snake_view()
         
         state_data: Dict[str, List[int]] = {
@@ -58,7 +61,7 @@ class Agent:
                     counter += self.__check_state_value(
                         state_data,
                         i,
-                        state[head_pos + idx * list(self._env.map_move.values())[i]],
+                        state[int(head_pos + idx * list(self._env.map_move.values())[i])],
                         idx
                     )
             idx += 1
@@ -89,7 +92,11 @@ class Agent:
                 data["ra_dist"][data_idx] = idx
         return 1
                 
-
-
-
+    def print_map(self, map: List[str], width:int):
+        logger.info('\n')
+        for i in range(len(map)):
+            print(map[i],end="")
+            if not (i+1) % width and i:
+                print()
+        print()
 

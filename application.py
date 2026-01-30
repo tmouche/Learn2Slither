@@ -1,13 +1,17 @@
 import tkinter
 
+from agent import Agent
 from typing import Sequence, List
-from time import sleep
 
 from environment import Environment
 from logger import logger
 from exception import (
     WindowToLarge,
-    UnknowCharInMap
+    UnknowCharInMap,
+    SnakeLoose,
+    SnakeWin,
+    SnakeGreenApple,
+    SnakeRedApple
 )
 from enumeration import Movement
 
@@ -234,6 +238,7 @@ class Application(tkinter.Tk):
     height: int
 
     env: Environment
+    agent: Agent
 
     game_grid: Grid
     menu: Menu
@@ -253,12 +258,13 @@ class Application(tkinter.Tk):
     MENU_L_PADDING = 5
     WHITE_SPACE = MENU_SIZE + MENU_T_PADDING * 2
 
-    def __init__(self, game_env: Environment):
+    def __init__(self, game_env: Environment, agent: Agent | None = None):
 
         super().__init__()
         self.title(self.TITLE)
 
         self.env = game_env
+        self.agent = agent
 
         self.step_mode = False
         self.visual_mode = True
@@ -280,11 +286,11 @@ class Application(tkinter.Tk):
         self.menu = Menu(self, self.game_grid.width, self.MENU_SIZE)
         MENU_Y_START:int = self.GRID_L_PADDING + self.game_grid.height + self.MENU_T_PADDING
         self.menu.place(x=self.MENU_L_PADDING, y=MENU_Y_START)
-        self.menu.create_human_start_button(self.game_human_loop)
-        self.menu.create_ia_start_button(self.game_ia_loop)
-        self.menu.create_switch_step_button(self.switch_step)
+        self.menu.create_human_start_button(self.action_human_start)
+        self.menu.create_ia_start_button(self.action_ia_start)
+        self.menu.create_switch_step_button(self.action_switch_step)
         self.menu.create_next_step_button(self.update)
-        self.menu.create_switch_visual_button(self.switch_visual)
+        self.menu.create_switch_visual_button(self.action_switch_visual)
 
         self.bind('<Key>', self.key_handler)
 
@@ -321,19 +327,31 @@ class Application(tkinter.Tk):
         elif pressed_key == "Right":
             self.env.change_move(Movement.RIGHT)
 
-    def switch_step(self):
+    def action_human_start(self):
+        self.game_human_loop()
+
+    def action_ia_start(self):
+        if self.agent is None:
+            logger.error("Need an agent to start IA")
+            raise Exception()
+        self.agent.train()
+        self.game_ia_loop()
+
+    def action_switch_step(self):
         self.step_mode = True if self.step_mode == False else False
 
-    def switch_visual(self):
+    def action_switch_visual(self):
         self.visual_mode = True if self.step_mode == False else False
 
     def update(self):
         try:
             self.env.update()
-        except Exception as exc:
-            logger.info(f"Game Finished: {exc}")
+        except (SnakeLoose, SnakeWin) as exc:
+            logger.info(f"Game Finished: {exc.message}")
             self.destroy()
-            return 
+            return
+        except (SnakeGreenApple, SnakeRedApple):
+            pass
         self.update_grid()
         self._print_map(self.env.snake_view(), self.env.width)
         logger.info(self.env.actual_move.name)
@@ -342,9 +360,10 @@ class Application(tkinter.Tk):
 
     def game_ia_loop(self):
         self.menu.deactivate_start_buttons()
+        self.env.reset()
         if self.step_mode == False:
-            # action = self.agent.take_action()
-            # self.env.change_move(action)
+            action:Movement = self.agent.take_action()
+            self.env.change_move(action)
             self.update()
         refresh_rate:int = self.GAME_SPEED_VISUAL if self.visual_mode else self.GAME_SPEED_NO_VISUAL
         self.game_grid.after(refresh_rate, self.game_human_loop)
@@ -352,7 +371,12 @@ class Application(tkinter.Tk):
     def game_human_loop(self):
         self.menu.deactivate_start_buttons()
         if self.step_mode == False:
-            self.update()
+            try:
+                self.update()
+            except SnakeWin:
+                return
+            except SnakeLoose:
+                return
         refresh_rate:int = self.GAME_SPEED_VISUAL if self.visual_mode else self.GAME_SPEED_NO_VISUAL
         self.game_grid.after(refresh_rate, self.game_human_loop)
 

@@ -7,12 +7,18 @@ WINDOW_TO_LARGE_ERROR = "window too big"
 UNKNOWN_CHAR_IN_MAP = "Unknown char in map"
 
 class CriticalException(Exception):
+
+    message: str
+
     def __init__(self, context:str):
-        logger.error(context)
+        self.message = context
 
 class FunctionalException(Exception):
-    def __init__(self):
-        pass
+
+    message: str
+
+    def __init__(self, context: str):
+        self.message = context
 
 #-------------------------------------------#
 #           --CRITICAL EXCEPTION--          #
@@ -40,9 +46,17 @@ class UnknowCharInMap(CriticalException):
 #-------------------------------------------#
 
 class SnakeLoose(FunctionalException):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, detail:str):
+        super().__init__(f"Snake lose from: {detail}")
 
 class SnakeWin(FunctionalException):
     def __init__(self):
-        super().__init__()
+        super().__init__(f"Snake win")
+
+class SnakeGreenApple(FunctionalException):
+    def __init__(self):
+        super().__init__(f"Snake has eaten a green apple")
+
+class SnakeRedApple(FunctionalException):
+    def __init__(self):
+        super().__init__(f"Snake has eaten a red apple")
