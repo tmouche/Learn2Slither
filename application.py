@@ -328,13 +328,16 @@ class Application(tkinter.Tk):
             self.env.change_move(Movement.RIGHT)
 
     def action_human_start(self):
+        self.menu.deactivate_start_buttons()
         self.game_human_loop()
 
     def action_ia_start(self):
         if self.agent is None:
             logger.error("Need an agent to start IA")
             raise Exception()
+        self.menu.deactivate_start_buttons()
         self.agent.train()
+        self.env.reset()
         self.game_ia_loop()
 
     def action_switch_step(self):
@@ -358,18 +361,16 @@ class Application(tkinter.Tk):
         if self.visual_mode:
             self.game_grid.draw()
 
+
     def game_ia_loop(self):
-        self.menu.deactivate_start_buttons()
-        self.env.reset()
         if self.step_mode == False:
             action:Movement = self.agent.take_action()
             self.env.change_move(action)
             self.update()
         refresh_rate:int = self.GAME_SPEED_VISUAL if self.visual_mode else self.GAME_SPEED_NO_VISUAL
-        self.game_grid.after(refresh_rate, self.game_human_loop)
+        self.game_grid.after(refresh_rate, self.game_ia_loop)
 
     def game_human_loop(self):
-        self.menu.deactivate_start_buttons()
         if self.step_mode == False:
             try:
                 self.update()

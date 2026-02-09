@@ -1,5 +1,5 @@
 from struct import pack
-from sys import float_info
+from math import inf
 from numpy import std, mean
 from typing import List, Sequence, Tuple
 
@@ -13,7 +13,7 @@ def norm(to_norm: Sequence[int]) -> Sequence[float]:
 
 def index_max(iter: Sequence[int] | Sequence[float]) -> Tuple[int, int | float]:
     idx_max: int = 0
-    maxi: int | float = float_info.min
+    maxi: int | float = -inf
 
     for i in range(len(iter)):
         if iter[i] > maxi:
