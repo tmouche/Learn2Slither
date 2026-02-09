@@ -11,12 +11,17 @@ class Agent:
 
     _env: Environment
 
+    PATH_TO_SAVE: str
+
     EPOCH: int
     LEARNING_RATE: float
     DISCOUNT: float
     EXPLO_RATE: float
     EXPLO_DECAY: float
     MAX_ACTION: int
+
+    def __init__(self):
+        pass
 
     def __init__(
         self,
@@ -26,7 +31,8 @@ class Agent:
         discount: float,
         e_rate: float,
         e_decay: float,
-        max_action: int
+        max_action: int,
+        path_to_save: str | None = None
     ):
         self._env = env
 
@@ -36,6 +42,9 @@ class Agent:
         self.EXPLO_RATE = e_rate
         self.EXPLO_DECAY = e_decay
         self.MAX_ACTION = max_action
+        self.PATH_TO_SAVE = path_to_save
+
+        self._RAND_MAX = 10000
 
     @abstractmethod
     def train():

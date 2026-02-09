@@ -2,15 +2,20 @@ from agent import Agent
 from enumeration import Movement, Mode
 from environment import Environment
 from exception import (
+    AgentFileInitFail,
+    Format,
     SnakeGreenApple,
     SnakeLoose,
     SnakeRedApple,
-    SnakeWin
+    SnakeWin,
+    UnexpectedException,
 )
 from logger import logger
 from random import randint
 from typing import Dict, List
 from utils import index_max, hash_list
+
+import json
 
 EPS = 1e-15
 
@@ -26,7 +31,46 @@ class AgentQL(Agent):
     REWARD_GREEN_APPLE: float = 2.
     REWARD_WIN: float = 50.
 
-    def __init__(
+    def __init__(self, **kwargs):
+
+        if "q_matrix_path" in kwargs.keys():
+            self.__init_trained(kwargs.get("env"), kwargs.get("q_matrix_path"))
+        else:
+            self.__init_training(
+                kwargs.get("env"),
+                kwargs.get("epoch"),
+                kwargs.get("l_rate"),
+                kwargs.get("discount"),
+                kwargs.get("e_rate"),
+                kwargs.get("e_decay"),
+                kwargs.get("max_action"),
+                kwargs.get("path_to_save")
+            )        
+
+
+    def __init_trained(self, env: Environment, q_matrix_path: str):
+        try:
+            f = None
+            f = open(q_matrix_path, "r")
+            raw_data: str = f.read()
+        except FileNotFoundError as fileErr:
+            logger.error(f"{self.__class__.__qualname__}: {fileErr}")
+            raise AgentFileInitFail(q_matrix_path)
+        except Exception as e:
+            logger.error(f"{self.__class__.__qualname__}: {e}")
+            raise UnexpectedException()
+        finally:
+            if f:
+                f.close()
+        
+        try:
+            self.q_matrix = json.loads(raw_data)
+        except json.JSONDecodeError as jsonErr:
+            logger.error(f"{self.__class__.__qualname__}: {jsonErr}")
+            raise Format("json")
+        self._env = env
+
+    def __init_training(
         self, 
         env: Environment,
         epoch:int,
@@ -34,7 +78,8 @@ class AgentQL(Agent):
         discount:float,
         e_rate:float,
         e_decay:float,
-        max_action:int
+        max_action:int,
+        path_to_save: str | None = None
     ):
         super().__init__(
             env,
@@ -43,12 +88,17 @@ class AgentQL(Agent):
             discount,
             e_rate,
             e_decay,
-            max_action
+            max_action,
+            path_to_save
         )
 
-        self.q_matrix = {}
+        self.q_matrix = None
 
     def train(self):
+        if self.q_matrix:
+            logger.info("Agent already trained")
+            return
+        self.q_matrix = {}
         for e in range(self.EPOCH):
             self._env.reset()
             done: bool = False
@@ -91,6 +141,7 @@ class AgentQL(Agent):
                 state = next_state
             if (self.EXPLO_RATE - self.EXPLO_DECAY > 1e-5):
                 self.EXPLO_RATE -= self.EXPLO_DECAY
+        self.export_to_json()
         logger.info("Training Done")
 
     def take_action(self) -> Movement:
@@ -100,7 +151,7 @@ class AgentQL(Agent):
 
     def policy(self, mode: Mode, state: str) -> int:
         idx_move: int
-        rand: int = randint(0, self.EPOCH)
+        rand: int = randint(0, self._RAND_MAX)
         if mode == Mode.TRAIN:
             if rand < self.EXPLO_RATE * self.EPOCH or not self.q_matrix.get(state):
                 idx_move = rand%4
@@ -115,3 +166,23 @@ class AgentQL(Agent):
                 logger.info(f"No experience found for the given state, random one choose")
                 idx_move = rand%4
         return idx_move
+
+    def export_to_json(self):
+        if not self.PATH_TO_SAVE:
+            return 
+        raw_data: str = json.dumps(self.q_matrix, indent=4)
+
+        try:
+            f = None
+            f = open(self.PATH_TO_SAVE, "w")
+            f.write(raw_data)
+        except FileNotFoundError as fileErr:
+            logger.error(f"{self.__class__.__qualname__}: {fileErr}")
+            raise AgentFileInitFail(self.PATH_TO_SAVE)
+        except Exception as e:
+            logger.error(f"{self.__class__.__qualname__}: {e}")
+            raise UnexpectedException()
+        finally:
+            if f:
+                f.close()
+        

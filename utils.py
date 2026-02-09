@@ -23,4 +23,4 @@ def index_max(iter: Sequence[int] | Sequence[float]) -> Tuple[int, int | float]:
 
 def hash_list(iter: Sequence[float]) -> str:
     format: str = '>' + str(len(iter)) + 'f'
-    return pack(format, *iter)
+    return str(pack(format, *iter))
