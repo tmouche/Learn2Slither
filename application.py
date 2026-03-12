@@ -3,7 +3,7 @@ import tkinter
 from agent import Agent
 from typing import Sequence, List
 
-from environment import Environment
+from services.environment import Environment
 from logger import logger
 from exception import (
     WindowToLarge,

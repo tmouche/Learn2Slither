@@ -1,0 +1,9 @@
+Panel Play:
+    Joueur
+    IA
+
+Panel Training:
+    Lancer et Monitorer le training
+    Avoir un visu sur les metrics du training\
+    Parametrer le model depuis le front et choisir l'architecture  
+    Modifier l environnement (les rewards)

@@ -1,11 +1,14 @@
+from utils.enum import AgentState
 
 from abc import abstractmethod
 from enumeration import Movement
-from environment import Environment
+from services.environment import Environment
 from exception import SnakeWin
 from logger import logger
 from typing import List, Dict
-from utils import norm
+from utils_file import norm
+from utils.dataclass import AgentSettings
+from utils.types import FloatT
 
 class Agent:
 
@@ -20,34 +23,40 @@ class Agent:
     EXPLO_DECAY: float
     MAX_ACTION: int
 
-    def __init__(self):
-        pass
+    REWARD_GREEN_APPLE: FloatT
+    REWARD_LOOSE: FloatT
+    REWARD_NOTHING: FloatT
+    REWARD_RED_APPLE: FloatT
+    REWARD_WIN: FloatT
+
+    state: AgentState
 
     def __init__(
         self,
         env: Environment,
-        epoch: int,
-        l_rate: float,
-        discount: float,
-        e_rate: float,
-        e_decay: float,
-        max_action: int,
-        path_to_save: str | None = None
+        agent_settings: AgentSettings
     ):
         self._env = env
 
-        self.EPOCH = epoch
-        self.LEARNING_RATE = l_rate
-        self.DISCOUNT = discount
-        self.EXPLO_RATE = e_rate
-        self.EXPLO_DECAY = e_decay
-        self.MAX_ACTION = max_action
-        self.PATH_TO_SAVE = path_to_save
+        self.DISCOUNT = agent_settings.hyper_params.discount
+        self.EPOCH = agent_settings.hyper_params.epoch
+        self.EXPLO_DECAY = agent_settings.hyper_params.exploration_decay
+        self.EXPLO_RATE = agent_settings.hyper_params.exploration_rate
+        self.LEARNING_RATE = agent_settings.hyper_params.learning_rate
+        self.MAX_ACTION = agent_settings.hyper_params.max_action
 
-        self._RAND_MAX = 10000
+        self.REWARD_GREEN_APPLE = agent_settings.rewards.green_apple
+        self.REWARD_LOOSE = agent_settings.rewards.loose
+        self.REWARD_NOTHING = agent_settings.rewards.noting
+        self.REWARD_RED_APPLE = agent_settings.rewards.red_apple
+        self.REWARD_WIN = agent_settings.rewards.win
+    
+        self.state = AgentState.CLUELESS
+
+        self._RAND_MAX = 10000 # jsp ce que c est
 
     @abstractmethod
-    def train():
+    def train(self):
         pass
 
 
@@ -108,4 +117,3 @@ class Agent:
             if not (i+1) % width and i:
                 print()
         print()
-

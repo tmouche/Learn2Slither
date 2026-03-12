@@ -1,3 +1,14 @@
+from utils.constant import (
+    MAX_HEIGHT,
+    MAX_WIDTH,
+    NUM_START_GREEN_APPLE,
+    NUM_START_RED_APPLE,
+    SIZE_START_SNAKE
+)
+from utils.dataclass import (
+    EnvironmentSettings
+)
+
 from collections import deque
 from itertools import islice
 from typing import Sequence, List, Dict
@@ -19,7 +30,6 @@ from exception import (
 
 
 class Snake:
-
     pos: deque[int]
 
     size: int
@@ -63,7 +73,6 @@ class Snake:
 
 
 class Basket:
-
     pos: List[int]
 
     def __init__(self):
@@ -86,7 +95,6 @@ class Basket:
 
 
 class Environment:
-    
     width:int
     height:int
 
@@ -106,24 +114,15 @@ class Environment:
 
     step: int
 
-    START_GA = 2
-    START_RA = 1
-    START_SNAKE = 3
-
-    START_MOVE = Movement.DOWN
-
-    MAX_WIDTH = 1000
-    MAX_HEIGHT = 1000
-
-    def __init__(self, w:int, h:int):
+    def __init__(self, settings: EnvironmentSettings):
         
-        if w > self.MAX_WIDTH or h > self.MAX_HEIGHT:
+        if settings.width > MAX_WIDTH or settings.height > MAX_HEIGHT:
             raise MapToLarge()
-        elif w <= 5 or h <= 5:
+        elif settings.width <= 5 or settings.height <= 5:
             raise MapToSmall()
 
-        self.width = w + 2
-        self.height = h + 2
+        self.width = settings.width + 2
+        self.height = settings.height + 2
 
         self.game_ground_size = self.width*self.height - (2*self.width) - (2*self.height) - 8
         self.__init_map_move()
@@ -132,16 +131,16 @@ class Environment:
 
         self.green_apple = Basket()
         self.red_apple = Basket()
-        self.snake = Snake(start_pos=self._calc_snake_first_pos(), start_size=self.START_SNAKE)
+        self.snake = Snake(start_pos=self._calc_snake_first_pos(), start_size=SIZE_START_SNAKE)
 
-        self.actual_move = self.START_MOVE
+        self.actual_move = Movement.DOWN
         self.move_counted = True
 
         self.step = 0
 
-        for _ in range(self.START_GA):
+        for _ in range(NUM_START_GREEN_APPLE):
             self.new_green_apple()
-        for _ in range(self.START_RA):
+        for _ in range(NUM_START_RED_APPLE):
             self.new_red_apple()
         self._update_map()
 

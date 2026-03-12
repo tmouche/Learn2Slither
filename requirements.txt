@@ -1,2 +1,5 @@
-flake8
-tkinker
+fastapi==0.135.1
+flake8==7.3.0
+numpy
+pandas
+plotly

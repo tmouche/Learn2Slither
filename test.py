@@ -1,6 +1,6 @@
 from application import Application
-from agent_ql import AgentQL
-from environment import Environment
+from services.agent_ql import AgentQL
+from services.environment import Environment
 
 myEnv = Environment(10, 10)
 myAgent = AgentQL(
