@@ -1,7 +1,6 @@
-from utils.enum import AgentState
+from utils.enum import AgentState, Movement
 
 from abc import abstractmethod
-from enumeration import Movement
 from services.environment import Environment
 from exception import SnakeWin
 from logger import logger
@@ -34,7 +33,8 @@ class Agent:
     def __init__(
         self,
         env: Environment,
-        agent_settings: AgentSettings
+        agent_settings: AgentSettings,
+        name: str | None = None
     ):
         self._env = env
 
@@ -53,12 +53,16 @@ class Agent:
     
         self.state = AgentState.CLUELESS
 
-        self._RAND_MAX = 10000 # jsp ce que c est
+        self.name = name or self._default_name()
+
+    @abstractmethod
+    def _default_name(self) -> str:
+        pass
+
 
     @abstractmethod
     def train(self):
         pass
-
 
     def _retrieve_state_from_env(self) -> List[float]:
         state: List[str] = self._env.snake_view()
@@ -117,3 +121,8 @@ class Agent:
             if not (i+1) % width and i:
                 print()
         print()
+
+    def get_map(self) -> List[str]:
+        if self.state == AgentState.IN_TRAINING:
+            return self._env.snake_view()
+        return self._env.map

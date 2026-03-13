@@ -34,4 +34,8 @@ class Logger:
         c_from: str = where()
         print(f"[ERROR][{c_from}] -> {msg}")
 
+    def critical(self, msg: str):
+        c_from: str = where()
+        print(f"[CRITICAL][{c_from}] -> Should not exist: {msg}")
+
     

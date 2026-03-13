@@ -1,8 +1,9 @@
 from logger import logger
 from services.agent import Agent
 from services.environment import Environment
+from time import time
 from typing import Dict, Tuple
-from utils.constant import EPS
+from utils.constant import EPS, RAND_MAX
 from utils.dataclass import AgentSettings
 from utils.enum import AgentState, Mode, Movement
 from utils.types import ArrayF, FloatT
@@ -34,15 +35,19 @@ class AgentQL(Agent):
     def __init__(
         self, 
         env: Environment,
-        agent_settings: AgentSettings
+        agent_settings: AgentSettings,
+        name: str | None = None
     ):
-        super().__init__(env=env, agent_settings=agent_settings)
+        super().__init__(env=env, agent_settings=agent_settings, name=name)
         self.STARTER = np.ndarray(4, dtype=FloatT)
         for i in range(len(self.STARTER)):
             self.STARTER[i] = 0. + EPS
 
         self.q_matrix = {}
-        
+    
+    def _default_name(self) -> str:
+        return f"{self.__class__.__qualname__}_{time()}"
+
     @classmethod
     def load(cls, path_to_agent: str):
         pass
@@ -121,7 +126,7 @@ class AgentQL(Agent):
 
     def policy(self, mode: Mode, state: str) -> int:
         idx_move: int
-        rand: int = randint(0, self._RAND_MAX)
+        rand: int = randint(0, RAND_MAX)
         if mode == Mode.TRAIN:
             if rand < self.EXPLO_RATE * self.EPOCH or not self.q_matrix.get(state):
                 idx_move = rand%4

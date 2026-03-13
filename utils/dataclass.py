@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
+from typing import Optional
 from utils.types import FloatT
 
 @dataclass
@@ -26,6 +27,7 @@ class RewardSettings(BaseModel):
 class AgentSettings(BaseModel):
     hyper_params: HyperParameters
     rewards: RewardSettings
+    agent_name: Optional[str] = None
 
 
 @dataclass

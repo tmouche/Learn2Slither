@@ -7,3 +7,6 @@ Panel Training:
     Avoir un visu sur les metrics du training\
     Parametrer le model depuis le front et choisir l'architecture  
     Modifier l environnement (les rewards)
+
+Le but va etre de garder les agents de la session active dans le dict loaded mais aussi d ecrire le resultat du training pour pouvoir le load plus tard, le but
+est de proposer tous les agents sur le site et de pouvoir pick celui qu on veut, s il est pas load ca le load et ca lance le jeu.

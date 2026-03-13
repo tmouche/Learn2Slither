@@ -18,6 +18,8 @@ LAYER_SHAPE = "Shape less or egale to zero"
 LAYER_ACTIVATION = "Layer activation function:"
 LAYER_INITIALIZER = "Layer initializer function:"
 
+AGENT_NOT_FOUND = "Agent not found"
+
 class CriticalException(Exception):
 
     message: str
@@ -118,3 +120,6 @@ class Format(CriticalException):
 #         --FUNCTIONNAL EXCEPTION--         #
 #-------------------------------------------#
 
+class AgentNotFoundException(FunctionalException):
+    def __init__(self):
+        super().__init__(AGENT_NOT_FOUND)
