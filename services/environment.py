@@ -17,8 +17,6 @@ from abc import abstractmethod
 
 from logger import logger
 
-from enumeration import Movement
-
 from exception import (
     MapToLarge,
     MapToSmall,
