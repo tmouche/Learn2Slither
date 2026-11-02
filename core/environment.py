@@ -9,18 +9,21 @@ from utils.dataclass import (
     EnvironmentSettings
 )
 
+from utils.enum import Movement
 from collections import deque
 from itertools import islice
 from typing import Sequence, List, Dict
 from random import randint
 from abc import abstractmethod
 
-from logger import logger
+from utils.logger import logger
 
-from exception import (
+from utils.exception import (
     MapToLarge,
     MapToSmall,
-    SnakeLoose,
+    SnakeLooseSize,
+    SnakeLooseWall,
+    SnakeLooseTail,
     SnakeWin,
     SnakeGreenApple,
     SnakeRedApple
@@ -40,7 +43,6 @@ class Snake:
         self.START_SIZE = start_size
         self.reset()
         
-
     def reset(self):
         self.pos = deque()
         for _ in range(self.START_SIZE):
@@ -58,8 +60,7 @@ class Snake:
     def collision(self, check_pos: int, exclude_head: bool = False) -> bool:
         reference: deque[int] = self.pos
         if exclude_head == True:
-            reference = list(islice(reference, 1, len(reference)))
-        
+            reference = list(islice(reference, 1, len(reference))) 
         if check_pos in reference:
             return True
         return False
@@ -157,14 +158,14 @@ class Environment:
         self.red_apple.reset()
         self.snake.reset()
 
-        self.actual_move = self.START_MOVE
+        self.actual_move = Movement.DOWN
         self.move_counted = True
 
         self.step = 0
 
-        for _ in range(self.START_GA):
+        for _ in range(2):
             self.new_green_apple()
-        for _ in range(self.START_RA):
+        for _ in range(1):
             self.new_red_apple()
         self._update_map()
 
@@ -197,8 +198,10 @@ class Environment:
         self.snake.moove(next_pos)
 
     def change_move(self, next_move: Movement, from_ia: bool = False):
-        if ((self.map_move[self.actual_move] + self.map_move[next_move] 
-            and self.move_counted == True) or from_ia == True):
+        is_move_opposit_to_last: bool = self.map_move[self.actual_move] + self.map_move[next_move] == 0
+        if ((is_move_opposit_to_last == True and self.move_counted == True) and from_ia == True):
+            raise SnakeLooseTail()
+        if ((is_move_opposit_to_last == False and self.move_counted == True) or from_ia == True):
             self.actual_move = next_move
             self.move_counted = False
 
@@ -215,15 +218,16 @@ class Environment:
         elif self.red_apple.collision(pos_to_check) is True:
             self.snake.decrease()
             if not self.snake.size:
-                raise SnakeLoose("Red apple")
+                self.reset()
+                raise SnakeLooseSize()
             self.red_apple.delete(pos_to_check)
             self.new_red_apple()
             self._update_map()
             raise SnakeRedApple()
         elif self.is_wall(pos_to_check) is True:
-            raise SnakeLoose("Wall")
-        elif self.snake.collision(pos_to_check, exclude_head=True) is True and self.step > self.START_SNAKE:
-            raise SnakeLoose("Snake's tail")
+            raise SnakeLooseWall()
+        elif self.snake.collision(pos_to_check, exclude_head=True) is True and self.step > 3:
+            raise SnakeLooseTail()
         else:
             self._update_map()
 

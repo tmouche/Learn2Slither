@@ -1,24 +1,15 @@
+
+from utils.logger import logger
+
+MAP_TO_LARGE_ERROR = "map too big"
+MAP_TO_SMALL_ERROR = "map too small"
+WINDOW_TO_LARGE_ERROR = "window too big"
+UNKNOWN_CHAR_IN_MAP = "Unknown char in map"
+FILE_INIT_FAIL = "Agent initialisation with file failed: "
 UNEXPECTED = "Unexpected Exception catched"
-FORMAT = "Parsing issue with format:"
-
-INIT_ERR = "Initialization failed:"
-
-MODEL = "[MODEL]"
-MODEL_OPTI = "Optimizer not found:"
-MODEL_LOSS = "Loss not found:"
-MODEL_ACTIVATION = "Activation not found:"
-
-NETWORK = "[NETWORK]"
-NETWORK_LAYER_COUNT = "Count of layer has to be greater than 2"
-NETWORK_BATCH_SIZE = "Batch Size has to be greater than 0"
-NETWORK_LEARNING_RATE = "Learning Rate has to be greater than 0"
-
-LAYER = "[LAYER]"
-LAYER_SHAPE = "Shape less or egale to zero"
-LAYER_ACTIVATION = "Layer activation function:"
-LAYER_INITIALIZER = "Layer initializer function:"
-
-AGENT_NOT_FOUND = "Agent not found"
+FORMAT = "Parsing issue with format: "
+FILE_SAVE = "File saving failed: "
+FOLDER_ERROR = "Fail in creating folder: "
 
 class CriticalException(Exception):
 
@@ -38,88 +29,74 @@ class FunctionalException(Exception):
 #           --CRITICAL EXCEPTION--          #
 #-------------------------------------------#
 
-#           --MODEL EXCEPTION--             #
-class ModelException(CriticalException):
-    def __init__(self, context: str):
-        super().__init__(f"{MODEL} {context}")
+class FolderCreationError(CriticalException):
+    def __init__(self, path_to_folder: str):
+        super().__init__(FOLDER_ERROR + path_to_folder)
 
-class ModelNetCreate(ModelException):
-    def _init__(self, context: str):
-        super().__init__(f"{INIT_ERR} {context}")
-
-class ModelOptimizer(ModelException):
-    def __init__(self, context: str):
-        super().__init__(f"{MODEL_OPTI} {context}")
-
-class ModelLoss(ModelException):
-    def __init__(self, context: str):
-        super().__init__(f"{MODEL_LOSS} {context}")
-
-class ModelActivation(ModelException):
-    def __init__(self, context: str):
-        super().__init__(f"{MODEL_LOSS} {context}")
-
-#           --NETWORK EXCEPTION--           #
-class NetworkException(CriticalException):
-    def __init__(self, context: str):
-        super().__init__(f"{NETWORK} {context}")
-
-class NetworkInit(NetworkException):
-    def __init__(self, context: str):
-        super().__init__(f"{INIT_ERR} {context}")
-
-class NetworkBatchSize(NetworkInit):
+class MapToLarge(CriticalException):
     def __init__(self):
-        super().__init__(NETWORK_BATCH_SIZE)
-
-class NetworkLayerCount(NetworkInit):
+        super().__init__(MAP_TO_LARGE_ERROR)
+    
+class MapToSmall(CriticalException):
     def __init__(self):
-        super().__init__(NETWORK_LAYER_COUNT)
+        super().__init__(MAP_TO_SMALL_ERROR)
 
-class NetworkLearningRate(NetworkInit):
+class WindowToLarge(CriticalException):
     def __init__(self):
-        super().__init__(NETWORK_LEARNING_RATE)
+        super().__init__(WINDOW_TO_LARGE_ERROR)
 
-
-
-#           --LAYER EXCEPTION--             #
-class LayerException(CriticalException):
-    def __init__(self, context: str):
-        super().__init__(f"{LAYER} {context}")
-
-class LayerInit(LayerException):
-    def __init__(self, context: str):
-        super().__init__(f"{INIT_ERR} {context}")
-
-class LayerActivation(LayerInit):
-    def __init__(self, context: str):
-        super().__init__(f"{LAYER_ACTIVATION} {context}")
-
-class LayerInitializer(LayerInit):
-    def __init__(self, context: str):
-        super().__init__(f"{LAYER_INITIALIZER} {context}")
-
-class LayerShape(LayerInit):
+class UnknowCharInMap(CriticalException):
     def __init__(self):
-        super().__init__(LAYER_SHAPE)
+        super().__init__(UNKNOWN_CHAR_IN_MAP)
 
+class AgentFileInitFail(CriticalException):
+    def __init__(self, path_to_file: str):
+        super().__init__(FILE_INIT_FAIL + path_to_file)
 
-#           --UTILS EXCEPTION--             #
 class UnexpectedException(CriticalException):
     def __init__(self):
         super().__init__(UNEXPECTED)
 
 class Format(CriticalException):
     def __init__(self, context: str):
-        super().__init__(f"{FORMAT} {context}")
+        super().__init__(FORMAT + context)
 
+class UnimplementedError(CriticalException):
+    def __init__(self, source: str):
+        super().__init__(f'{source} is not implemented')
 
-
+class AgentFileSave(CriticalException):
+    def __init__(self, path_to_file: str):
+        super().__init__(FILE_SAVE + path_to_file)
 
 #-------------------------------------------#
 #         --FUNCTIONNAL EXCEPTION--         #
 #-------------------------------------------#
 
-class AgentNotFoundException(FunctionalException):
+class SnakeLoose(FunctionalException):
+    def __init__(self, detail:str):
+        super().__init__(f"Snake lose from: {detail}")
+
+class SnakeLooseWall(SnakeLoose):
     def __init__(self):
-        super().__init__(AGENT_NOT_FOUND)
+        super().__init__("Wall")
+
+class SnakeLooseTail(SnakeLoose):
+    def __init__(self):
+        super().__init__("Snake tail")
+
+class SnakeLooseSize(SnakeLoose):
+    def __init__(self):
+        super().__init__("Snake size")
+
+class SnakeWin(FunctionalException):
+    def __init__(self):
+        super().__init__("Snake win")
+
+class SnakeGreenApple(FunctionalException):
+    def __init__(self):
+        super().__init__("Snake has eaten a green apple")
+
+class SnakeRedApple(FunctionalException):
+    def __init__(self):
+        super().__init__("Snake has eaten a red apple")

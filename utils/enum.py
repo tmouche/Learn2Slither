@@ -6,8 +6,13 @@ class AgentState(Enum):
     TRAINED = "TRAINED"
 
 class Mode(Enum):
-    TRAIN = 0,
-    TEST = 1
+    AI_PLAY = "AI_PLAY",
+    AI_TRAIN = "AI_TRAIN",
+    HUMAIN_PLAY = "HUMAN_PLAY",
+
+class AppStatus(Enum):
+    PLAY = "PLAY"
+    STOP = "STOP"
 
 class Movement(Enum):
     UP = 0,

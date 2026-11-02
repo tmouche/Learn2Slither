@@ -1,0 +1,5 @@
+OUI AU BON ENDROIT
+[INFO] -> Training finished.
+[INFO] -> Training finished.
+[INFO] -> Training finished.
+ Y a des problemes dans la logique meme du jeu il semble pouvoir faire des moves interdits 

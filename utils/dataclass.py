@@ -1,36 +1,31 @@
-from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 from typing import Optional
 from utils.types import FloatT
 
-@dataclass
-class EnvironmentSettings(BaseModel):
+class EnvironmentSettings:
     height:int
     width:int
 
-@dataclass
-class HyperParameters(BaseModel):
+class HyperParameters:
     discount: FloatT
     exploration_decay: FloatT
     exploration_rate: FloatT
     epoch: int
     learning_rate: FloatT
     max_action: int
-@dataclass
-class RewardSettings(BaseModel):
+
+class RewardSettings:
     green_apple: FloatT
     loose: FloatT
     noting: FloatT
     red_apple: FloatT
     win: FloatT
-@dataclass
-class AgentSettings(BaseModel):
+
+class AgentSettings:
     hyper_params: HyperParameters
     rewards: RewardSettings
     agent_name: Optional[str] = None
 
-
-@dataclass
-class TrainingNew(BaseModel):
+class TrainingNew:
     env_params: EnvironmentSettings
     agent_params: AgentSettings

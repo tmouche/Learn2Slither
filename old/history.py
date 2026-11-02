@@ -24,15 +24,11 @@ COLUMNS = [
 FILE = "results/history.csv"
 
 def save_to_history(
-        optimizer:str=None,
-        activation_function:str=None,
-        loss_function:str=None,
+        model:str= None,
+        discount: str= None,
+        exploration_rate: float = None,
         epoch:int=None,
         learning_rate:float=None,
-        network_shape:List=None,
-        batch_size:int=None,
-        min_training_loss:float=None,
-        min_testing_loss:float=None,
         accuracy:float=None,
         precision:float=None,
         recall:float=None,

@@ -6,7 +6,7 @@ POSITIV = [1, 0]
 
 FOLDER_NET_SAVE = "network_save"
 
-RAND_MAX = 10000
+RAND_MAX = 100
 
 #environment
 MAX_HEIGHT = 1000
