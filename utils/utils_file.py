@@ -25,7 +25,8 @@ def index_max(iter: Sequence[int] | Sequence[float]) -> Tuple[int, int | float]:
 
 def hash_list(iter: Sequence[float]) -> str:
     form: str = '>' + str(len(iter)) + 'f'
-    return str(pack(form, *iter))
+    my_hash: str = str(pack(form, *iter))
+    return my_hash
 
 def create_folder(path_to_folder: str, on_error: bool = False):
     try:

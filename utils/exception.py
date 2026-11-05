@@ -1,6 +1,3 @@
-
-from utils.logger import logger
-
 MAP_TO_LARGE_ERROR = "map too big"
 MAP_TO_SMALL_ERROR = "map too small"
 WINDOW_TO_LARGE_ERROR = "window too big"

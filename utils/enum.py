@@ -12,6 +12,7 @@ class Mode(Enum):
 
 class AppStatus(Enum):
     PLAY = "PLAY"
+    PAUSE = "PAUSE"
     STOP = "STOP"
 
 class Movement(Enum):

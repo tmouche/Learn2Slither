@@ -3,3 +3,10 @@ OUI AU BON ENDROIT
 [INFO] -> Training finished.
 [INFO] -> Training finished.
  Y a des problemes dans la logique meme du jeu il semble pouvoir faire des moves interdits 
+
+ Attention saut dans le temps quand pause !
+ Attention la map ne peut pas etre impaire
+Attention file not found sur load
+
+ Seeding du spawn des pommes vertes et rouges
+ BenchMark sur 10 parties post entrainement et sur differente taille de grid

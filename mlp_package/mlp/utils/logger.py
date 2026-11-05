@@ -1,6 +1,4 @@
-
 import inspect
-
 
 def where():
     frame = inspect.currentframe().f_back.f_back
@@ -9,7 +7,7 @@ def where():
     object_name: str = ""
     try:
         object_name = frame.f_locals['self'].__class__.__qualname__
-    except:
+    except Exception:
         object_name = "<module>"
     return f"{object_name}.{func_name}"
 
@@ -34,8 +32,4 @@ class Logger:
         c_from: str = where()
         print(f"[ERROR][{c_from}] -> {msg}")
 
-    def critical(self, msg: str):
-        c_from: str = where()
-        print(f"[CRITICAL][{c_from}] -> Should not exist: {msg}")
-
-    
+logger = Logger()

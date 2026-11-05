@@ -1,13 +1,13 @@
-from utils.constant import COLUMNS, DROP_COLUMNS
+from mlp.utils.constant import COLUMNS, DROP_COLUMNS
+from mlp.utils.types import ArrayF, FloatT
 from typing import List, Dict
-from utils.types import ArrayF, FloatT
 import numpy
 import pandas
 
 def	normalize(
-        df:pandas.DataFrame,
-        starting_column:int
-    ) -> pandas.DataFrame:
+    df:pandas.DataFrame,
+    starting_column:int
+) -> pandas.DataFrame:
     """
     Norm a pandas dataFrame by columns.
 
@@ -33,17 +33,17 @@ def create_normalized_data(
     try:
         df = pandas.read_csv(file_path, header=None)
         df.columns = COLUMNS
-    except:
+    except Exception:
         print(f"Error log: can not process {file_path}")
         raise FileNotFoundError(file_path)
-    df.drop(columns=DROP_COLUMNS, inplace=True)
+    df = df.drop(columns=DROP_COLUMNS)
     normalized_df: pandas.DataFrame = normalize(df, 1) 
     return normalized_df
 
 
 def process_df_1_output(
-        df: pandas.DataFrame
-    ) -> List[Dict[str, ArrayF]]:
+    df: pandas.DataFrame
+) -> List[Dict[str, ArrayF]]:
     """
     Convert DataFrame into structured dataset
     for a single binary output model.
@@ -73,8 +73,8 @@ def process_df_1_output(
 
 
 def process_df_2_output(
-        df:pandas.DataFrame,
-    ) -> List[Dict[str, ArrayF]]:
+    df:pandas.DataFrame,
+) -> List[Dict[str, ArrayF]]:
     """
     Convert training and testing DataFrames into structured datasets
     for a two-output (one-hot encoded) classification model.

@@ -1,5 +1,5 @@
+from mlp.utils.logger import Logger
 from typing import List, Dict
-from utils.logger import Logger
 import pandas
 import os
 
@@ -24,11 +24,15 @@ COLUMNS = [
 FILE = "results/history.csv"
 
 def save_to_history(
-        model:str= None,
-        discount: str= None,
-        exploration_rate: float = None,
+        optimizer:str=None,
+        activation_function:str=None,
+        loss_function:str=None,
         epoch:int=None,
         learning_rate:float=None,
+        network_shape:List=None,
+        batch_size:int=None,
+        min_training_loss:float=None,
+        min_testing_loss:float=None,
         accuracy:float=None,
         precision:float=None,
         recall:float=None,
@@ -65,5 +69,5 @@ def save_to_history(
         df.to_csv(FILE, index=False)
     except Exception as e:
         logger.error(f"An error occured on the history updating: {e}")
-        raise Exception()
+        raise e
     

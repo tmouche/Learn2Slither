@@ -22,9 +22,9 @@ class RewardSettings:
     win: FloatT
 
 class AgentSettings:
-    hyper_params: HyperParameters
-    rewards: RewardSettings
-    agent_name: Optional[str] = None
+    hyper_params: Optional[HyperParameters] = None
+    rewards: Optional[RewardSettings] = None
+    agent_name: str = "default"
 
 class TrainingNew:
     env_params: EnvironmentSettings

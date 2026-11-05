@@ -1,7 +1,8 @@
 venv
 .venv
 vscode
-.venv/
 **/__pycache__/
 *.html
 network_save
+plots/
+**/.venv/

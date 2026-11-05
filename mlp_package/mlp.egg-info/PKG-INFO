@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: mlp
+Version: 1.0.6
+Summary: Multylayer perceptron framework
+Author: tmouche
+Requires-Dist: numpy>=2.5.4
+Requires-Dist: pandas>=3.1.0
+Requires-Dist: plotly>=7.1.0
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: summary
