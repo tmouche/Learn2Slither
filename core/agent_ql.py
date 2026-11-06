@@ -76,8 +76,6 @@ class AgentQL(Agent):
         idx_move: int = self._define_move(hashed_state)
         reward = self._get_reward(idx_move)
         self._update_q_matrix(hashed_state, idx_move, reward)
-        if ((self._explo_rate_in_use - self._explo_decay) > 1e-8):
-            self._explo_rate_in_use -= self._explo_decay
 
     def _update_q_matrix(
         self,

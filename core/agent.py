@@ -111,6 +111,7 @@ class Agent:
             self._reward_win = agent_settings.rewards.win
         self._name = agent_settings.agent_name
         self._base = []
+        self._acc_reward = 0.
         if agent_settings.hyper_params is not None:
             self._base = [0 for _ in range(self._epoch_max)]
         self._movement_default = range(len(Movement))
@@ -265,6 +266,8 @@ class Agent:
         self._action = 0
         self._done = False
         self._state = self._retrieve_state_from_env()
+        if ((self._explo_rate_in_use - self._explo_decay) > 1e-8):
+            self._explo_rate_in_use -= self._explo_decay
 
     def _save_epoch(self):
         e: int = self._epoch
@@ -277,14 +280,8 @@ class Agent:
 
     def _retrieve_state_from_env(self) -> List[float]:
         state_data: Dict[str, List[int]] = self._retrieve_state_data()
-        normed_state: List[float] = []
-        for v in state_data.values():
-            for i in range(4):
-                if i <= 1:
-                    normed_state.append(round(v[i]/self._env.height, 1))
-                else:
-                    normed_state.append(round(v[i]/self._env.width, 1))
-        return normed_state
+        # 1/distance: 1 = adjacent, 0 = nothing in this direction
+        return [round(1. / d, 2) if d else 0. for v in state_data.values() for d in v]
 
     def _retrieve_state_data(self) -> Dict[str, List[int]]:
         snake_view: List[str] = self._env.snake_view()

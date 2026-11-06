@@ -1,3 +1,4 @@
+from copy import deepcopy
 from mlp.core.layer import Layer
 from mlp.ml_tools.fire import Fire
 from mlp.utils.constant import FOLDER_NET_SAVE
@@ -125,6 +126,6 @@ class Network:
             batch_size=self.batch_size,
             loss_function=self.loss_function
         )
-        new_net.weights = self.weights.copy()
-        new_net.biaises = self.biaises.copy()
+        new_net.weights = deepcopy(self.weights)
+        new_net.biaises = deepcopy(self.biaises)
         return new_net

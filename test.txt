@@ -10,3 +10,9 @@ Attention file not found sur load
 
  Seeding du spawn des pommes vertes et rouges
  BenchMark sur 10 parties post entrainement et sur differente taille de grid
+
+ 1. Un vrai target network
+Aujourd'hui, il est recopié tous les 15 pas, à chaque mort et à chaque début d'epoch avec une reward positive. Comme les parties sont courtes, il est presque toujours identique au q-network et ne stabilise rien. Je te conseille de le recopier sur un compteur global de pas, par exemple tous les 500 à 1000 pas, sans le lier aux epochs. Autre option : une mise à jour douce à chaque pas, t = 0.995·t + 0.005·q.
+
+2. Double DQN
+Tes Q-values ont grimpé jusqu'à environ 65 alors que les récompenses sont petites : c'est la surestimation classique du DQN. La correction tient en une ligne dans _update_experience_inplace : tu choisis l'action suivante avec le q-network, mais.

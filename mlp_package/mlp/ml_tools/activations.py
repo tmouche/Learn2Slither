@@ -39,7 +39,7 @@ class Nothing(Activation):
 
     @staticmethod
     def prime(y: FloatT | ArrayF) -> FloatT | ArrayF:
-        return y
+        return np.ones_like(y)
     
     def _mean_square_error_grad(
             self,
@@ -55,7 +55,7 @@ class Nothing(Activation):
             y: FloatT | ArrayF,
             e: FloatT | ArrayF
         ) -> FloatT | ArrayF:
-        loss = abs(y - e)
+        loss = np.sign(y - e)
         prime = self.prime(y)
         return loss * prime
     
@@ -112,7 +112,7 @@ class Sigmoid(Activation):
             y: FloatT | ArrayF,
             e: FloatT | ArrayF
         ) -> FloatT | ArrayF:
-        loss: FloatT | ArrayF = abs(y - e)
+        loss: FloatT | ArrayF = np.sign(y - e)
         prime: FloatT | ArrayF = self.prime(y)
         return loss * prime
     
@@ -166,7 +166,7 @@ class Tanh(Activation):
             y: FloatT | ArrayF,
             e: FloatT | ArrayF
         ) -> FloatT | ArrayF:
-        loss: FloatT | ArrayF = abs(y - e)
+        loss: FloatT | ArrayF = np.sign(y - e)
         prime: FloatT | ArrayF = self.prime(y)
         return loss * prime   
 
@@ -201,7 +201,7 @@ class ReLu(Activation):
         y: FloatT | ArrayF,
         e: FloatT | ArrayF
         ) -> FloatT | ArrayF:
-        loss: FloatT | ArrayF = abs(y - e)
+        loss: FloatT | ArrayF = np.sign(y - e)
         prime: FloatT | ArrayF = self.prime(y)
         return loss * prime
 
@@ -234,7 +234,7 @@ class LeakyReLu(Activation):
         self,
         y: FloatT | ArrayF,
         e: FloatT | ArrayF) -> FloatT | ArrayF:
-        loss: FloatT | ArrayF = abs(y - e)
+        loss: FloatT | ArrayF = np.sign(y - e)
         prime: FloatT | ArrayF = self.prime(y)
         return loss * prime
     
@@ -276,5 +276,5 @@ class Softmax(Activation):
             y: FloatT | ArrayF,
             e: FloatT | ArrayF
         ):
-        loss: FloatT | ArrayF = abs(y - e)
+        loss: FloatT | ArrayF = np.sign(y - e)
         return loss

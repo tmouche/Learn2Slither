@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: mlp
-Version: 1.0.6
+Version: 1.0.8
 Summary: Multylayer perceptron framework
 Author: tmouche
 Requires-Dist: numpy>=2.5.4

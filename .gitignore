@@ -4,5 +4,5 @@ vscode
 **/__pycache__/
 *.html
 network_save
-plots/
+plots/git 
 **/.venv/
