@@ -2,8 +2,9 @@ from core.agent import Agent
 from dataclasses import dataclass
 from mlp.core.model import Network
 from mlp.core.layer import Layer
-from mlp.ml_tools.optimizers import GradientDescent
+from mlp.ml_tools.optimizers import GradientDescent, ADAM
 from mlp.utils.types import ArrayF, FloatT
+from numpy import median
 from pickle import dump, load
 from random import SystemRandom
 from secrets import choice
@@ -12,6 +13,10 @@ from utils.constant import EPS
 from utils.enum import Movement
 from utils.exception import (
     AgentFileSave,
+    SnakeGreenApple,
+    SnakeLoose,
+    SnakeRedApple,
+    SnakeWin,
 )
 from utils.logger import logger
 from utils.utils_file import index_max
@@ -62,14 +67,18 @@ class ReplayBuffer:
         )
         xp_sample: List[Experience] = [self._buffer[i] for i in sample_idx]
         return xp_sample
-        
+
+
 class AgentDQL(Agent):
+    WITHOUT_REWARD_THRESHOLD = 100
 
     _exp_replay: ReplayBuffer
     _q_network: Network
     _t_network: Network    
     _batch_size: int
-    _optimizer: GradientDescent
+    _optimizer: ADAM
+    _acc_step: int
+    _last_reward_at: int
 
     def __init__(self, env, agent_settings, batch_size: int):
         super().__init__(env, agent_settings)
@@ -78,31 +87,37 @@ class AgentDQL(Agent):
         self._q_network = Network(
             layers=[
                 Layer(shape=12),
-                Layer(shape=16, activation="LeakyReLu", initializer="he_normal"),
-                Layer(shape=16, activation="LeakyReLu", initializer="he_normal"),
+                Layer(shape=32, activation="LeakyReLu", initializer="he_normal"),
                 Layer(shape=4, activation="Nothing", initializer="xavier_normal")
             ],
             learning_rate=self.learning_rate if self.learning_rate is not None else 1,
             batch_size=self._batch_size,
             loss_function="mean_square_error"
         )
-        self._optimizer = GradientDescent(
-            network=self._q_network
+        self._optimizer = ADAM(
+            fire=None,
+            network=self._q_network,
+            momentum_rate=0.8,
+            velocity_rate=0.8
         )
         self._t_network = self._q_network.copy()
-        
+        self._last_reward_at = 0
+
     @override
     def train(self):
         self._reset_training()
         while self._epoch < self._epoch_max:
             self._reset_epoch()
-            while self._action < self._max_action and self._done == False:
+            while (
+                self._step.epoch_step < self._max_action
+                and self._done == False
+                and (self._step.epoch_step - self._last_reward_at) < self.WITHOUT_REWARD_THRESHOLD
+            ):
                 self._critical_loop()
-                if not self._action % 15 or self._done == True:
+                if not self._step.accumulated_step % 150:
                     self._t_network = self._q_network.copy()
-            logger.info(f"Finished at {self._action}..")
-            if self._action >= self._max_action:
-                logger.info("Max action reached..")
+                self._step.plus_one()
+            logger.debug(f"Finished at {self._step.epoch_step}..")
             self._save_epoch()
 
     @override
@@ -143,19 +158,40 @@ class AgentDQL(Agent):
     @override
     def take_action(self) -> Movement:
         self._state = self._retrieve_state_from_env()
-        idx_move:int = self._policy(self._state)
+        idx_move:int = self._policy()
         return list(Movement)[idx_move]
 
     @override
     def _reset_epoch(self):
-        if self._acc_reward > 0.:
-            self._t_network = self._q_network.copy()
-        super()._reset_epoch()
+        self._last_reward_at = 0
+        return super()._reset_epoch()
+
+    def _evaluation(self, lap: int) -> FloatT:
+        result: List[int] = []
+        for _ in range(lap):
+            self._env.reset()
+            step: int = 0
+            while step < 700:
+                action = self.take_action()
+                try:
+                    self._env.change_move(action, from_ia=True)
+                    self._env.update()
+                except (SnakeLoose, SnakeWin):
+                    break
+                except (SnakeGreenApple, SnakeRedApple):
+                    pass
+                step += 1
+            result.append(self._env.snake.size)
+        result_median: FloatT = median(result)
+        logger.info(f"Median score at epoch {self._epoch}: {result_median}")
+        return result_median
 
     def _critical_loop(self):
         act_state: List[FloatT] = self._state.copy()
         idx_move: int = self._define_move()
         reward: FloatT = self._get_reward(idx_move)
+        if reward >= 0:
+            self._last_reward_at = self._step.epoch_step
         self._store_experience(
             act_state,
             self._state,
@@ -252,9 +288,14 @@ class AgentDQL(Agent):
         )
         td_target: FloatT = experience.reward
         if not experience.done:
-            td_target += (self.discount * max(out_tnet))
+            out_qnet_next: List[FloatT] = self._q_network.fire.full(
+                input=experience.next_state,
+                weights=self._q_network.weights,
+                biaises=self._q_network.biaises
+            )
+            a_next = int(np.argmax(out_qnet_next))
+            td_target += (self.discount * out_tnet[a_next])
         td_diff: FloatT = td_target - out_qnet[experience.action]
         experience.td_error = min(abs(td_diff), TD_CLIP) + EPS
-        # Huber-like: the MSE gradient (y - label) is bounded to [-TD_CLIP, TD_CLIP]
         out_qnet[experience.action] += float(np.clip(td_diff, -TD_CLIP, TD_CLIP))
         experience.label = out_qnet

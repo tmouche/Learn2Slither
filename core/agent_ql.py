@@ -31,8 +31,14 @@ class AgentQL(Agent):
         self._reset_training()
         while self._epoch < self._epoch_max:
             self._reset_epoch()
-            while self._action < self._max_action and self._done == False:
+            while (
+                self._step.epoch_step < self._max_action
+                and self._done == False
+                and (self._last_reward_at - self._step.epoch_step) < self.WITHOUT_REWARD_THRESHOLD
+            ):
                 self._critical_loop()
+                self._step.plus_one()
+            logger.debug(f"Finished at {self._step.epoch_step}..")
             self._save_epoch()
 
     @override

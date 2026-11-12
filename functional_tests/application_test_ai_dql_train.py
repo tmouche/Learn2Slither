@@ -34,7 +34,7 @@ agg_settings.agent_name = "test_functionnal_dql"
 agg_settings.hyper_params = hp_settings
 agg_settings.rewards = rw_settings
 
-agent = AgentDQL(env=env, agent_settings=agg_settings, batch_size=5)
+agent = AgentDQL(env=env, agent_settings=agg_settings, batch_size=10)
 
 # app = Application(game_env=env, mode=Mode.AI_TRAIN, agent=agent)
 # app.launch(session=1)

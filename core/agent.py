@@ -8,7 +8,7 @@ from pandas import DataFrame, Series, read_csv
 from plotly.graph_objects import Figure
 from secrets import randbelow
 from typing import List, Dict, Generator, Optional, Tuple
-from utils.dataclass import AgentSettings
+from utils.dataclass import AgentSettings, Step
 from utils.constant import EPS, RAND_MAX
 from utils.enum import Movement
 from utils.exception import (
@@ -70,7 +70,6 @@ class Agent:
     _state: List[FloatT]
     _numerical_state: FloatT
     _explo_rate_in_use: FloatT
-    _action: int
     _done: bool
 
     # Epoch Stat
@@ -85,6 +84,8 @@ class Agent:
     _snake_len_history: List[int]
     _snake_hit: List[int]
     _wall_hit: List[int]
+
+    _step: Step
 
     _movement_default: List[int]
 
@@ -115,6 +116,7 @@ class Agent:
         if agent_settings.hyper_params is not None:
             self._base = [0 for _ in range(self._epoch_max)]
         self._movement_default = range(len(Movement))
+        self._step = Step()
 
     @property
     def name(self):
@@ -225,7 +227,6 @@ class Agent:
 
     def _get_reward(self, idx_move: int) -> FloatT:
         reward: FloatT = self._reward_nothing
-        self._action += 1
         try:
             self._env.change_move(list(Movement)[idx_move], from_ia=True)
             self._env.update()
@@ -257,17 +258,17 @@ class Agent:
         self._red_apple_history = self._base.copy()
         self._wall_hit = self._base.copy()
         self._snake_hit = self._base.copy()
+        self._step.reset()
 
     def _reset_epoch(self):
         self._env.reset()
         self._acc_reward = 0.
         self._green_apple = 0
         self._red_apple = 0
-        self._action = 0
         self._done = False
         self._state = self._retrieve_state_from_env()
-        if ((self._explo_rate_in_use - self._explo_decay) > 1e-8):
-            self._explo_rate_in_use -= self._explo_decay
+        self._explo_rate_in_use *= 0.997
+        self._step.reset_epoch()
 
     def _save_epoch(self):
         e: int = self._epoch
@@ -280,7 +281,6 @@ class Agent:
 
     def _retrieve_state_from_env(self) -> List[float]:
         state_data: Dict[str, List[int]] = self._retrieve_state_data()
-        # 1/distance: 1 = adjacent, 0 = nothing in this direction
         return [round(1. / d, 2) if d else 0. for v in state_data.values() for d in v]
 
     def _retrieve_state_data(self) -> Dict[str, List[int]]:

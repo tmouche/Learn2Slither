@@ -1,5 +1,5 @@
 
-class Logger:
+class LoggerL2S:
 
     _instance = None
 
@@ -20,4 +20,4 @@ class Logger:
     def warning(self, msg):
         print(f"[WARNING] -> {msg}")
 
-logger = Logger()
+logger = LoggerL2S()
