@@ -13,7 +13,8 @@ hp.exploration_rate = 1.0
 hp.learning_rate = 0.25
 hp.max_action = 10000
 hp.epoch = 5000
-hp.exploration_decay = 1.0/hp.epoch
+hp.exploration_min = 0.05
+hp.exploration_frac = (hp.exploration_rate - hp.exploration_min) / (0.3 * hp.epoch)  # epsilon descend lineairement jusqu'a exploration_min, atteint a 30 % du training
 
 agg = AgentSettings()
 agg.agent_name = 'test'

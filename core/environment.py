@@ -21,6 +21,7 @@ from utils.logger import logger
 from utils.exception import (
     MapToLarge,
     MapToSmall,
+    SnakeImpossibleMove,
     SnakeLooseSize,
     SnakeLooseWall,
     SnakeLooseTail,
@@ -278,5 +279,5 @@ class Environment:
         return vision
     
     def _calc_snake_first_pos(self) -> int:
-        return int(self.width * self.height / 2) + self.width / 2
+        return (self.height // 2) * self.width + self.width // 2
     

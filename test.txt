@@ -20,5 +20,15 @@ Tes Q-values ont grimpé jusqu'à environ 65 alors que les récompenses sont pet
 3
 Limite a x step sans reward pour eviter qu il tourne en rond
 
-4
-apres chaque epoch lance une 10runs s il fait mieux que le record on garde le net sinon on bazarde
+
+
+
+
+TEST:
+    Origin: 22
+    Passage à 16 values dans le state et encodage de toutes les valeurs: 16
+    
+
+
+Traceback quand le fichier n existe pas
+Rajouter l action aléatoire meme en mode play si + de x sans pommes

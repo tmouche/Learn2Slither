@@ -15,22 +15,23 @@ env_settings.height = 10
 env = Environment(env_settings)
 
 rw_settings = RewardSettings()
-rw_settings.green_apple = 1.
-rw_settings.red_apple = -0.5
-rw_settings.noting = -0.03
-rw_settings.loose = -1.
-rw_settings.win = 1.
-
 hp_settings = HyperParameters()
+rw_settings.green_apple = 0.5
+rw_settings.red_apple = -0.5
+rw_settings.noting = -0.02
+rw_settings.loose = -1.0
+rw_settings.win = 1.0
+
 hp_settings.discount = 0.95
 hp_settings.exploration_rate = 1.
-hp_settings.learning_rate = 0.005
+hp_settings.learning_rate = 2.37e-03
 hp_settings.max_action = 700
-hp_settings.epoch = 2000
-hp_settings.exploration_decay = 1.0/(hp_settings.epoch - hp_settings.epoch // 4)
+hp_settings.epoch = 1000
+hp_settings.exploration_min = 0.05
+hp_settings.exploration_frac = (hp_settings.exploration_rate - hp_settings.exploration_min) / (0.3 * hp_settings.epoch)
 
 agg_settings = AgentSettings()
-agg_settings.agent_name = "test_functionnal_dql"
+agg_settings.agent_name = "test_functionnal_dql_12_5k"
 agg_settings.hyper_params = hp_settings
 agg_settings.rewards = rw_settings
 

@@ -143,7 +143,6 @@ class RMSPropagation(Optimizer):
 
     def __init__(
         self,
-        fire: Fire,
         network: Network,
         velocity_rate: FloatT
     ):
@@ -188,7 +187,6 @@ class NesterovAcceleratedGradient(Optimizer):
 
     def __init__(
         self,
-        fire: Fire,
         network: Network,
         momentum_rate: FloatT
     ):
@@ -245,12 +243,13 @@ class ADAM(Optimizer):
     momentum_w: List[List[ArrayF]]
     momentum_b: List[ArrayF]
 
+    t: int
+
     __r_momentum_w: List[List[ArrayF]]
     __r_momentum_b: List[ArrayF]
 
     def __init__(
         self,
-        fire: Fire,
         network: Network,
         momentum_rate: FloatT,
         velocity_rate: FloatT
@@ -260,21 +259,24 @@ class ADAM(Optimizer):
         self.velocity_rate = velocity_rate
         self.velocity_w = [np.full((len(w),len(w[0])) , 0., dtype=FloatT) for w in self.net.weights]
         self.velocity_b = [np.full(len(w), 0., dtype=FloatT) for w in self.net.weights]
-        self.__r_momentum_w = [np.full((len(w),len(w[0])) , 0., dtype=FloatT) for w in self.net.weights]
-        self.__r_momentum_b = [np.full(len(w), 0., dtype=FloatT) for w in self.net.weights]
+        self.momentum_w = [np.full((len(w),len(w[0])) , 0., dtype=FloatT) for w in self.net.weights]
+        self.momentum_b = [np.full(len(w), 0., dtype=FloatT) for w in self.net.weights]
+        self.t = 0
         self._reset()
 
     @override
     def _reset(self):
-        self.momentum_w = self.__r_momentum_w.copy()
-        self.momentum_b = self.__r_momentum_b.copy()
+        pass
+        # self.momentum_w = self.__r_momentum_w.copy()
+        # self.momentum_b = self.__r_momentum_b.copy()
 
     @override
     def _update(self, batch_size: int):
+        self.t += 1
         for i in range(len(self.net.weights)):
             self._update_momentum(i, batch_size)
             self._update_velocity(i, batch_size)
-            self._update_parameters(i, batch_size)
+            self._update_parameters(i)
 
     def _update_momentum(self, index: int, batch_size: int):
         self.momentum_w[index] = self.momentum_rate * self.momentum_w[index] + (1 - self.momentum_rate) * (self.fire.nabla_w[index] / batch_size)
@@ -284,11 +286,11 @@ class ADAM(Optimizer):
         self.velocity_w[index] = self.velocity_rate * self.velocity_w[index] + (1 - self.velocity_rate)*(np.power(self.fire.nabla_w[index]/batch_size, 2))
         self.velocity_b[index] = self.velocity_rate * self.velocity_b[index] + (1 - self.velocity_rate)*(np.power(self.fire.nabla_b[index]/batch_size, 2))
 
-    def _update_parameters(self, index: int, batch_size: int):
-        momentum_corr_w: List[ArrayF] = self.momentum_w[index] / (1 - self.momentum_rate ** batch_size)
-        momentum_corr_b: List[ArrayF] = self.momentum_b[index] / (1 - self.momentum_rate ** batch_size)
-        velocity_corr_w: List[ArrayF] = self.velocity_w[index] / (1 - self.velocity_rate ** batch_size)
-        velocity_corr_b: List[ArrayF] = self.velocity_b[index] / (1 - self.velocity_rate ** batch_size)
+    def _update_parameters(self, index: int):
+        momentum_corr_w: List[ArrayF] = self.momentum_w[index] / (1 - self.momentum_rate ** self.t)
+        momentum_corr_b: List[ArrayF] = self.momentum_b[index] / (1 - self.momentum_rate ** self.t)
+        velocity_corr_w: List[ArrayF] = self.velocity_w[index] / (1 - self.velocity_rate ** self.t)
+        velocity_corr_b: List[ArrayF] = self.velocity_b[index] / (1 - self.velocity_rate ** self.t)
         self.net.weights[index] -= momentum_corr_w/(np.sqrt(velocity_corr_w + EPS)) * self.net.learning_rate
         self.net.biaises[index] -= momentum_corr_b/(np.sqrt(velocity_corr_b + EPS)) * self.net.learning_rate
 
@@ -306,20 +308,17 @@ class AdapativeAheadMomentum(RMSPropagation, NesterovAcceleratedGradient):
     """
     def __init__(
         self,
-        fire: Fire,
         network: Network,
         momentum_rate: FloatT,
         velocity_rate: FloatT
     ):
         RMSPropagation.__init__(
             self,
-            fire=fire,
             network=network,
             velocity_rate=velocity_rate
         )
         NesterovAcceleratedGradient.__init__(
             self,
-            fire=fire,
             network=network,
             momentum_rate=momentum_rate
         )

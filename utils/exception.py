@@ -97,3 +97,7 @@ class SnakeGreenApple(FunctionalException):
 class SnakeRedApple(FunctionalException):
     def __init__(self):
         super().__init__("Snake has eaten a red apple")
+
+class SnakeImpossibleMove(FunctionalException):
+    def __init__(self):
+        super().__init__("Snake took an impossible move")

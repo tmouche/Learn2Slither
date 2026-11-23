@@ -12,6 +12,7 @@ from utils.dataclass import AgentSettings, Step
 from utils.constant import EPS, RAND_MAX
 from utils.enum import Movement
 from utils.exception import (
+    SnakeImpossibleMove,
     SnakeGreenApple,
     SnakeLoose,
     SnakeLooseTail,
@@ -26,6 +27,7 @@ import os
 import plotly.express as px
 
 class Agent:
+    WITHOUT_REWARD_THRESHOLD = 75
     SAVE_FOLDER = "models"
     PLOT_FOLDER = "plots"
     HISTORY_FILE = "history.csv"
@@ -57,7 +59,8 @@ class Agent:
     _learning_rate: float
     _discount: float
     _explo_rate: float
-    _explo_decay: float
+    _explo_frac: float
+    _explo_min: float
     _max_action: int
     _reward_green_apple: FloatT
     _reward_lose: FloatT
@@ -76,6 +79,7 @@ class Agent:
     _acc_reward: FloatT
     _green_apple: int
     _red_apple: int
+    _last_reward_at: int
 
     # Training Stat
     _green_apple_history: List[int]
@@ -100,7 +104,8 @@ class Agent:
         if agent_settings.hyper_params is not None:
             self._discount = agent_settings.hyper_params.discount
             self._epoch_max = agent_settings.hyper_params.epoch
-            self._explo_decay = agent_settings.hyper_params.exploration_decay
+            self._explo_frac = agent_settings.hyper_params.exploration_frac
+            self._explo_min = agent_settings.hyper_params.exploration_min
             self._explo_rate = agent_settings.hyper_params.exploration_rate
             self._learning_rate = agent_settings.hyper_params.learning_rate
             self._max_action = agent_settings.hyper_params.max_action
@@ -117,6 +122,7 @@ class Agent:
             self._base = [0 for _ in range(self._epoch_max)]
         self._movement_default = range(len(Movement))
         self._step = Step()
+        self._last_reward_at = 0
 
     @property
     def name(self):
@@ -139,8 +145,12 @@ class Agent:
         return getattr(self, "_explo_rate", None)
 
     @property
-    def explo_decay(self) -> Optional[float]:
-        return getattr(self, "_explo_decay", None)
+    def explo_frac(self) -> Optional[float]:
+        return getattr(self, "_explo_frac", None)
+
+    @property
+    def explo_min(self) -> Optional[float]:
+        return getattr(self, "_explo_min", None)
 
     @property
     def max_action(self) -> Optional[int]:
@@ -168,22 +178,22 @@ class Agent:
 
     @abstractmethod
     def train(self):
-        return UnimplementedError(f'{type(self).__name__}.train')
+        raise UnimplementedError(f'{type(self).__name__}.train')
 
     def train_sequentially(self) -> Generator:
-        return UnimplementedError(f'{type(self).__name__}.train_sequentially')
+        raise UnimplementedError(f'{type(self).__name__}.train_sequentially')
 
     @abstractmethod
     def load(self):
-        return UnimplementedError(f'{type(self).__name__}.load')
+        raise UnimplementedError(f'{type(self).__name__}.load')
 
     @abstractmethod
     def save(self):
-        return UnimplementedError(f'{type(self).__name__}.save')
+        raise UnimplementedError(f'{type(self).__name__}.save')
 
     @abstractmethod
     def take_action(self) -> Movement:
-        return UnimplementedError(f'{type(self).__name__}.take_action')
+        raise UnimplementedError(f'{type(self).__name__}.take_action')
 
     def save_training_metrics(self):
         try:
@@ -247,6 +257,8 @@ class Agent:
         self._acc_reward += reward
         if not self._done:
             self._state = self._retrieve_state_from_env()
+        if reward >= 0:
+            self._last_reward_at = self._step.epoch_step
         return reward
 
     def _reset_training(self):
@@ -267,8 +279,9 @@ class Agent:
         self._red_apple = 0
         self._done = False
         self._state = self._retrieve_state_from_env()
-        self._explo_rate_in_use *= 0.997
+        self._explo_rate_in_use = max(self.explo_min ,self._explo_rate_in_use - self._explo_frac)
         self._step.reset_epoch()
+        self._last_reward_at = 0
 
     def _save_epoch(self):
         e: int = self._epoch
@@ -287,8 +300,8 @@ class Agent:
         snake_view: List[str] = self._env.snake_view()
         state_data: Dict[str, List[int]] = {
             "d_dist": [0, 0, 0, 0],
-            "ga_dist": [0, 0, 0, 0],
-            "ra_dist": [0, 0, 0, 0],
+            "ga_dist": [-1, -1, -1, -1],
+            "ra_dist": [-1, -1, -1, -1],
         }
         head_pos: int = self._env.snake.pos[0]
         idx: int = 1
@@ -317,13 +330,12 @@ class Agent:
         match current:
             case 'W' | 'S':
                 data['d_dist'][data_idx] = idx
+                return True
             case 'G':
                 data['ga_dist'][data_idx] = idx
             case 'R':
                 data['ra_dist'][data_idx] = idx
-            case _:
-                return False
-        return True
+        return False
 
     def _plot_death(self):
         wall_death: List[int] = self._acc_list(self._wall_hit)
@@ -416,11 +428,15 @@ class Agent:
                 break
         return stop
 
+    def _allowed_moves(self) -> List[int]:
+        current: int = self._env.map_move[self._env.actual_move]
+        return [i for i, move in enumerate(Movement) if self._env.map_move[move] + current != 0]
+
     @staticmethod
     def create_map_action():
         new_array = ndarray(len(Movement), dtype=FloatT)
         for i in range(len(new_array)):
-            new_array[i] = log(randbelow(100) + EPS)
+            new_array[i] = 0
         return new_array
 
     @staticmethod

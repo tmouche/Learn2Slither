@@ -59,7 +59,7 @@ class Application():
     ):
         pygame.init()
         pygame.display.set_caption(
-            title=title
+            title
         )
         self._env = game_env
         self._agent = agent
@@ -223,8 +223,8 @@ class Application():
 
     def _build_new_frame(self):
         self._update_grid()
-        # self._print_map(self._env.snake_view(), self._env.width)
-        # logger.info(self._env.actual_move.name)
+        self._print_map(self._env.snake_view(), self._env.width)
+        logger.info(self._env.actual_move.name)
         self._grid.draw(self._surface)
         pygame.display.flip()
 

@@ -10,7 +10,6 @@ from utils.types import ArrayF, FloatT
 from utils.exception import (
     AgentFileSave,
 )
-from utils.utils_file import index_max
 import os
 
 
@@ -34,7 +33,6 @@ class AgentQL(Agent):
             while (
                 self._step.epoch_step < self._max_action
                 and self._done == False
-                and (self._last_reward_at - self._step.epoch_step) < self.WITHOUT_REWARD_THRESHOLD
             ):
                 self._critical_loop()
                 self._step.plus_one()
@@ -46,8 +44,12 @@ class AgentQL(Agent):
         self._reset_training()
         while self._epoch < self._epoch_max:
             self._reset_epoch()
-            while self._action < self._max_action and self._done == False:
+            while (
+                self._step.epoch_step < self._max_action
+                and self._done == False
+            ):
                 self._critical_loop()
+                self._step.plus_one()
                 yield
             self._save_epoch()
 
@@ -81,6 +83,12 @@ class AgentQL(Agent):
         hashed_state: str = self._get_hashed_state(self._state)
         idx_move: int = self._define_move(hashed_state)
         reward = self._get_reward(idx_move)
+        if (
+            (self._step.epoch_step - self._last_reward_at) > self.WITHOUT_REWARD_THRESHOLD
+            and reward == self.reward_nothing
+        ):
+                reward = self.reward_red_apple
+                self._last_reward_at = self._step.epoch_step
         self._update_q_matrix(hashed_state, idx_move, reward)
 
     def _update_q_matrix(
@@ -114,9 +122,8 @@ class AgentQL(Agent):
         return idx_move
 
     def _policy(self, state: str, random_action: bool = False) -> int:
-        idx_move: int = 0
+        allowed: List[int] = self._allowed_moves()
         if random_action == True:
-            idx_move = choice(self._movement_default)
-        else:
-            idx_move, _ = index_max(self.q_matrix.get(state))
-        return idx_move
+            return choice(allowed)
+        q_values: ArrayF = self.q_matrix.get(state)
+        return max(allowed, key=lambda i: q_values[i])

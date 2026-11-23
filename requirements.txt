@@ -3,4 +3,4 @@ numpy
 pandas
 plotly
 pydantic==2.14.2
-pygame==2.6.1
+pygame-ce==2.5.8

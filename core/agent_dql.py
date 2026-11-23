@@ -19,7 +19,6 @@ from utils.exception import (
     SnakeWin,
 )
 from utils.logger import logger
-from utils.utils_file import index_max
 import os
 import numpy as np
 
@@ -70,7 +69,6 @@ class ReplayBuffer:
 
 
 class AgentDQL(Agent):
-    WITHOUT_REWARD_THRESHOLD = 100
 
     _exp_replay: ReplayBuffer
     _q_network: Network
@@ -78,7 +76,6 @@ class AgentDQL(Agent):
     _batch_size: int
     _optimizer: ADAM
     _acc_step: int
-    _last_reward_at: int
 
     def __init__(self, env, agent_settings, batch_size: int):
         super().__init__(env, agent_settings)
@@ -95,13 +92,11 @@ class AgentDQL(Agent):
             loss_function="mean_square_error"
         )
         self._optimizer = ADAM(
-            fire=None,
             network=self._q_network,
-            momentum_rate=0.8,
-            velocity_rate=0.8
+            momentum_rate=0.9,
+            velocity_rate=0.999
         )
         self._t_network = self._q_network.copy()
-        self._last_reward_at = 0
 
     @override
     def train(self):
@@ -111,7 +106,6 @@ class AgentDQL(Agent):
             while (
                 self._step.epoch_step < self._max_action
                 and self._done == False
-                and (self._step.epoch_step - self._last_reward_at) < self.WITHOUT_REWARD_THRESHOLD
             ):
                 self._critical_loop()
                 if not self._step.accumulated_step % 150:
@@ -125,7 +119,7 @@ class AgentDQL(Agent):
         self._reset_training()
         while self._epoch < self._epoch_max:
             self._reset_epoch()
-            while self._action < self._max_action and self._done == False:
+            while self._step.epoch_step < self._max_action and self._done == False:
                 self._critical_loop()
                 yield
             self._save_epoch()
@@ -163,7 +157,6 @@ class AgentDQL(Agent):
 
     @override
     def _reset_epoch(self):
-        self._last_reward_at = 0
         return super()._reset_epoch()
 
     def _evaluation(self, lap: int) -> FloatT:
@@ -183,14 +176,15 @@ class AgentDQL(Agent):
                 step += 1
             result.append(self._env.snake.size)
         result_median: FloatT = median(result)
-        logger.info(f"Median score at epoch {self._epoch}: {result_median}")
+        logger.info(f"Median score: {result_median}")
         return result_median
 
     def _critical_loop(self):
         act_state: List[FloatT] = self._state.copy()
         idx_move: int = self._define_move()
         reward: FloatT = self._get_reward(idx_move)
-        if reward >= 0:
+        if (self._step.epoch_step - self._last_reward_at) > self.WITHOUT_REWARD_THRESHOLD and reward == self.reward_nothing:
+            reward = self.reward_red_apple
             self._last_reward_at = self._step.epoch_step
         self._store_experience(
             act_state,
@@ -209,17 +203,15 @@ class AgentDQL(Agent):
         self,
         random_action: bool = False
     ) -> int:
-        idx_move: int = 0
+        allowed: List[int] = self._allowed_moves()
         if random_action == True:
-            idx_move = choice(self._movement_default)
-        else:
-            idx_move, _ = index_max(self._q_network.fire.full(
-                    input=self._state,
-                    weights=self._q_network.weights,
-                    biaises=self._q_network.biaises
-                )
-            )
-        return idx_move
+            return choice(allowed)
+        q_values: ArrayF = self._q_network.fire.full(
+            input=self._state,
+            weights=self._q_network.weights,
+            biaises=self._q_network.biaises
+        )
+        return max(allowed, key=lambda i: q_values[i])
 
     def _store_experience(
         self,

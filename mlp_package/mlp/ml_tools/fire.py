@@ -111,10 +111,7 @@ class Fire:
             - Each neuron's output is computed as `dot(weight, input) + bias`.
             - The function returns an array containing all neuron outputs for the layer.
         """
-        res: ArrayF = np.ndarray(0)
-        for w, b in zip(weights, biaises):
-            res = np.append(res, np.dot(w, input) + b)
-        return res
+        return weights @ input + biaises
 
     def full(
             self,

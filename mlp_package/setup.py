@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="mlp",
-    version="1.0.8",
+    version="1.0.11",
     author="tmouche",
     description="Multylayer perceptron framework",
     package=[

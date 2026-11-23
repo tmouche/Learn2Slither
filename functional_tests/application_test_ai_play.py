@@ -8,8 +8,8 @@ from utils.dataclass import (
 from utils.enum import Mode
 
 env_settings = EnvironmentSettings()
-env_settings.width = 20
-env_settings.height = 20
+env_settings.width = 10
+env_settings.height = 10
 env = Environment(env_settings)
 ag_settings = AgentSettings()
 ag_settings.agent_name = "test"
@@ -17,12 +17,12 @@ agent = AgentQL(
     env=env,
     agent_settings=ag_settings
 )
-agent.load("test_functionnal_100x100")
+agent.load("test_agent_100k")
 app = Application(
     game_env=env,
     agent=agent,
     mode=Mode.AI_PLAY
 )
-app.launch(session=2)
+app.launch(session=5)
 
 

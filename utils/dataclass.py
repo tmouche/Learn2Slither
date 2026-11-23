@@ -8,7 +8,8 @@ class EnvironmentSettings:
 
 class HyperParameters:
     discount: FloatT
-    exploration_decay: FloatT
+    exploration_frac: FloatT  # valeur soustraite a epsilon a chaque epoch (decroissance lineaire)
+    exploration_min: FloatT   # plancher d'epsilon
     exploration_rate: FloatT
     epoch: int
     learning_rate: FloatT
