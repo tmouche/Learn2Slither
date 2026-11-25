@@ -128,7 +128,6 @@ class AgentQL(Agent):
         allowed: List[int] = self._allowed_moves()
         if random_action == True or force_random == True:
             if force_random:
-                logger.info("Random forced: Too much steps without reward")
                 self._last_reward_at = self._step.epoch_step
             return choice(allowed)
         q_values: ArrayF = self.q_matrix.get(state)

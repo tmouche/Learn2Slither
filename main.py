@@ -47,6 +47,7 @@ def agent_settings(
     return agg
 
 def play(env: Environment, agent: Agent, app_mode: Mode = Mode.HUMAIN_PLAY):
+    logger.info("Starting application...")
     app = Application(env, agent, mode=app_mode)
     app.launch()
 
@@ -82,6 +83,8 @@ def main():
     elif settings.load:
         if settings.visual == True:
             play(env, agent, Mode.AI_PLAY)
+        else:
+            agent._evaluation(settings.session)
     else:
         if settings.visual == True:
             play(env, agent)

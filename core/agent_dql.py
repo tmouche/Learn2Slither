@@ -2,20 +2,15 @@ from core.agent import Agent
 from dataclasses import dataclass
 from mlp.core.model import Network
 from mlp.core.layer import Layer
-from mlp.ml_tools.optimizers import GradientDescent, ADAM
+from mlp.ml_tools.optimizers import ADAM
 from mlp.utils.types import ArrayF, FloatT
 from pickle import dump, load
-from random import SystemRandom
 from secrets import choice
-from typing import Dict, Generator, List, Optional, override, Tuple
+from typing import Dict, Generator, List, Optional, override
 from utils.constant import EPS
 from utils.enum import Movement
 from utils.exception import (
     AgentFileSave,
-    SnakeGreenApple,
-    SnakeLoose,
-    SnakeRedApple,
-    SnakeWin,
 )
 from utils.logger import logger
 import os
@@ -186,7 +181,6 @@ class AgentDQL(Agent):
         allowed: List[int] = self._allowed_moves()
         if random_action == True or force_random == True:
             if force_random:
-                logger.info("Random forced: Too much steps without reward")
                 self._last_reward_at = self._step.epoch_step
             return choice(allowed)
         q_values: ArrayF = self._q_network.fire.full(

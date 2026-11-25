@@ -2,6 +2,7 @@ from app.square import Square
 from typing import List
 from pygame import Surface
 
+
 class Grid():
     BLACK_COLOR = "black"
     EVEN_COLOR = "DarkKhaki"
@@ -11,11 +12,10 @@ class Grid():
     SNAKE_HEAD_COLOR = "DarkBlue"
     SNAKE_BODY_COLOR = "CornflowerBlue"
     WALL_COLOR = "DarkGreen"
-    
     CASE_SIZE = 20
 
     objs: List[Square]
-    
+
     _width: int
     _height: int
 

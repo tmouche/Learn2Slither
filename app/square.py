@@ -2,10 +2,11 @@ from typing import List
 from pygame import Surface, Rect
 import pygame
 
+
 class Square():
 
     color: str
-    
+
     _pos: List[int]
     _obj: Rect
     _size: int

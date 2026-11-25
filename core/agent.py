@@ -5,7 +5,7 @@ from numpy import mean, median, ndarray
 from pandas import DataFrame, Series, read_csv
 from plotly.graph_objects import Figure
 from secrets import randbelow
-from typing import List, Dict, Generator, Optional, Tuple
+from typing import List, Dict, Generator, Optional
 from utils.dataclass import AgentSettings, Step
 from utils.constant import RAND_MAX
 from utils.enum import Movement
@@ -22,6 +22,7 @@ from utils.logger import logger
 from utils.utils_file import create_folder, hash_list, prep_to_dict
 import os
 import plotly.express as px
+
 
 class Agent:
     WITHOUT_REWARD_THRESHOLD = 75
@@ -87,11 +88,9 @@ class Agent:
     _wall_hit: List[int]
 
     _step: Step
-
     _movement_default: List[int]
-
     _base: List[int]
-    
+
     def __init__(
         self,
         env: Environment,
@@ -243,8 +242,8 @@ class Agent:
         except SnakeLoose as exc:
             reward = self._reward_lose
             self._done = True
-            if type(exc) == SnakeLooseWall: self._wall_hit[self._epoch] = 1
-            elif type(exc) == SnakeLooseTail: self._snake_hit[self._epoch] = 1
+            if exc is SnakeLooseWall: self._wall_hit[self._epoch] = 1
+            elif exc is SnakeLooseTail: self._snake_hit[self._epoch] = 1
         except SnakeRedApple:
             reward = self._reward_red_apple
             self._red_apple += 1

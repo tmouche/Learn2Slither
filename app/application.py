@@ -3,8 +3,8 @@ from core.environment import Environment
 from core.agent import Agent
 from pygame import Surface
 from pygame.time import Clock
+from pygame.event import Event, post
 from typing import (
-    Dict,
     Generator,
     List,
     Optional,
@@ -15,7 +15,6 @@ from utils.enum import (
     Movement,
 )
 from utils.exception import (
-    WindowToLarge,
     UnknowCharInMap,
     SnakeLoose,
     SnakeWin,
@@ -32,6 +31,7 @@ GAME_SPEED_FACTOR = 1
 GAME_SPEED_MAX = 1000
 GAME_SPEED_MIN = 1
 IDLE_TICK = 30
+
 
 class Application():
     GRID_T_PADDING = 5
@@ -89,7 +89,10 @@ class Application():
     def __init_mode_ai_train(self):
         self._actual_mode = Mode.AI_TRAIN
         if self._agent is None:
-            logger.error("You need to pass an agent as argument if you want to train it through the app.")
+            logger.error(
+                "You need to pass an agent as argument if you want \
+                to train it through the app."
+            )
             os._exit(1)
         if self._training is None:
             self._training = self._agent.train_sequentially()
@@ -97,7 +100,10 @@ class Application():
     def __init_mode_ai_play(self):
         self._actual_mode = Mode.AI_PLAY
         if self._agent is None:
-            logger.error("You need to pass an agent as argument if you want see it play.")
+            logger.error(
+                "You need to pass an agent as argument if you want \
+                see it play."
+            )
             os._exit(1)
 
     def launch(self, session: int = 1):
@@ -159,15 +165,21 @@ class Application():
                 self._key_handler(event.key)
 
     def _key_handler(self, pressed_key: int):
-        if self._key_handler_general(pressed_key): return
+        if self._key_handler_general(pressed_key):
+            return
         if self._actual_mode == Mode.HUMAIN_PLAY:
-           if self._key_handler_humain_play(pressed_key): return
-        if self._actual_mode == Mode.AI_PLAY or self._actual_mode == Mode.AI_TRAIN:
-            if self._key_handler_ai_play(pressed_key): return
-                
+            if self._key_handler_humain_play(pressed_key):
+                return
+        if (
+            self._actual_mode == Mode.AI_PLAY
+            or self._actual_mode == Mode.AI_TRAIN
+        ):
+            if self._key_handler_ai_play(pressed_key):
+                return
+
     def _key_handler_general(self, pressed_key: int) -> bool:
         match pressed_key:
-            case pygame.K_ESCAPE: pygame.event.post(pygame.event.Event(pygame.QUIT))
+            case pygame.K_ESCAPE: post(Event(pygame.QUIT))
             case pygame.K_SPACE: self.toggle_app_status()
             case pygame.K_p: self.increase_game_speed()
             case pygame.K_m: self.decrease_game_speed()
@@ -177,11 +189,11 @@ class Application():
 
     def _key_handler_humain_play(self, pressed_key: int) -> bool:
         match pressed_key:
-           case pygame.K_UP: self._env.change_move(Movement.UP)
-           case pygame.K_DOWN: self._env.change_move(Movement.DOWN)
-           case pygame.K_LEFT: self._env.change_move(Movement.LEFT)
-           case pygame.K_RIGHT: self._env.change_move(Movement.RIGHT)
-           case _: return False
+            case pygame.K_UP: self._env.change_move(Movement.UP)
+            case pygame.K_DOWN: self._env.change_move(Movement.DOWN)
+            case pygame.K_LEFT: self._env.change_move(Movement.LEFT)
+            case pygame.K_RIGHT: self._env.change_move(Movement.RIGHT)
+            case _: return False
         return True
 
     def _key_handler_ai_play(self, pressed_key: int) -> bool:
@@ -209,7 +221,10 @@ class Application():
         return False
 
     def toggle_app_status(self):
-        self._status = AppStatus.PLAY if self._status == AppStatus.PAUSE else AppStatus.PAUSE
+        self._status = (
+            AppStatus.PLAY if self._status == AppStatus.PAUSE
+            else AppStatus.PAUSE
+        )
 
     def close_app(self):
         self._status = AppStatus.STOP
@@ -255,17 +270,18 @@ class Application():
         try:
             self._env.update()
         except (SnakeLoose, SnakeWin) as exc:
-            logger.info(f"Game Finished: {exc.message}, snake size: {self._env.snake.size}")
+            logger.info(f"Game Finished: {exc.message}, \
+                snake size: {self._env.snake.size}")
             self._status = AppStatus.STOP
         except (SnakeGreenApple):
             self._agent.got_positiv_reward()
         except SnakeRedApple:
             pass
 
-    def _print_map(self, map: List[str], width:int):
+    def _print_map(self, map: List[str], width: int):
         logger.info('\n')
         for i in range(len(map)):
-            print(map[i],end="")
+            print(map[i], end="")
             if not (i+1) % width and i:
                 print()
         print()
