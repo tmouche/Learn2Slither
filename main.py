@@ -7,6 +7,7 @@ from core.environment import Environment
 from utils.dataclass import EnvironmentSettings, AgentSettings, HyperParameters, RewardSettings
 from utils.enum import Mode
 from utils.settings import Settings
+import sys
 
 def environment_settings() -> EnvironmentSettings:
     sett = EnvironmentSettings()
@@ -61,9 +62,16 @@ def main():
         reward_settings=rs
     )
     env = Environment(sett)
-    agent = AgentQL(env=env, agent_settings=agg)
+    if settings.agent_type == settings.QL:
+        agent = AgentQL(env=env, agent_settings=agg)
+    else:
+        agent = AgentDQL(env=env, agent_settings=agg, batch_size=15)
     if settings.load:
-        agent.load(settings.load_file)
+        try:
+            agent.load(settings.load_file)
+        except Exception:
+            logger.error("Exit Learn2Slither..")
+            sys.exit(1)
     if settings.train:
         if settings.visual == False:
             agent.train()
@@ -71,8 +79,6 @@ def main():
             play(env, agent, Mode.AI_TRAIN)
         agent.save()
         agent.save_training_metrics()
-        if settings.plot == True:
-            agent.plot_training_metrics()
     elif settings.load:
         if settings.visual == True:
             play(env, agent, Mode.AI_PLAY)

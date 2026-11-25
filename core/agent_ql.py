@@ -35,7 +35,6 @@ class AgentQL(Agent):
                 and self._done == False
             ):
                 self._critical_loop()
-                self._step.plus_one()
             logger.debug(f"Finished at {self._step.epoch_step}..")
             self._save_epoch()
 
@@ -49,16 +48,19 @@ class AgentQL(Agent):
                 and self._done == False
             ):
                 self._critical_loop()
-                self._step.plus_one()
                 yield
             self._save_epoch()
 
     @override
     def load(self, name: str):
         path_to_file: str = f"{self.SAVE_FOLDER}/{name}.pkl" 
-        with open(path_to_file, "rb") as f:
-            self.q_matrix = load(f)
-
+        try:
+            with open(path_to_file, "rb") as f:
+                self.q_matrix = load(f)
+        except Exception as exc:
+            logger.error(f"Error during opening file: {exc}")
+            raise exc
+        
     @override
     def save(self):
         path_to_file: str = f"{self.SAVE_FOLDER}/{self.name}.pkl"
@@ -114,7 +116,7 @@ class AgentQL(Agent):
         )
 
     def _define_move(self, hashed_state: str):
-        random_action: bool = self.rand_int() < (self._explo_rate_in_use * 100)
+        random_action: bool = self.rand_int(100) < (self._explo_rate_in_use * 100)
         if self.q_matrix.get(hashed_state) is None:
             self.q_matrix[hashed_state] = self.create_map_action()
             random_action = True
@@ -122,8 +124,13 @@ class AgentQL(Agent):
         return idx_move
 
     def _policy(self, state: str, random_action: bool = False) -> int:
+        force_random: bool = (self._step.epoch_step - self._last_reward_at) > self.WITHOUT_REWARD_THRESHOLD
         allowed: List[int] = self._allowed_moves()
-        if random_action == True:
+        if random_action == True or force_random == True:
+            if force_random:
+                logger.info("Random forced: Too much steps without reward")
+                self._last_reward_at = self._step.epoch_step
             return choice(allowed)
         q_values: ArrayF = self.q_matrix.get(state)
+        self._step.plus_one()
         return max(allowed, key=lambda i: q_values[i])

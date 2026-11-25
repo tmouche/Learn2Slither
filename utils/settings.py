@@ -5,19 +5,21 @@ import os
 
 class Settings:
 
+    DQL: str = "dql"
+    QL: str = "ql"
+
     load: bool
-    plot: bool
     train: bool
     visual: bool
     session: int
     load_file: Optional[str]
     train_file: Optional[str]
+    agent_type: str
 
     _args: Namespace
 
     def __init__(self):
         self.load = False
-        self.plot = False
         self.visual = False
         self.train = False
         self.session = 1
@@ -26,7 +28,7 @@ class Settings:
         self._args = None
 
     def parse(self):
-        if self.args is None:
+        if self._args is None:
             self._parse()
 
     def _parse(self):
@@ -37,9 +39,15 @@ class Settings:
         parser.add_argument("--visual", action="store_true", default=False)
         parser.add_argument("--train", type=str)
         parser.add_argument("--load", type=str)
-        parser.add_argument("--plot", action="store_true", default=False)
         parser.add_argument("--session", type=int, default=1)
+        parser.add_argument("--agent", type=str, choices=['dql', 'ql'], default='ql')
         self._args = parser.parse_args()
+        self._parse_visual()
+        self._parse_train()
+        self._parse_load()
+        self._parse_session()
+        self._parse_agent()
+
 
     def _parse_visual(self):
         self.visual = self._args.visual
@@ -66,11 +74,11 @@ class Settings:
         else:
             self.load = False
 
-    def _parse_plot(self):
-        self.plot = self._args.plot
-
     def _parse_session(self):
         self.session = self._args.session
         if self.session <= 0:
             logger.error("Session should be striclty superior to 0")
             os._exit(1)
+
+    def _parse_agent(self):
+        self.agent_type = self._args.agent

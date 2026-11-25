@@ -31,7 +31,7 @@ GAME_SPEED_DEFAULT = 3
 GAME_SPEED_FACTOR = 1
 GAME_SPEED_MAX = 1000
 GAME_SPEED_MIN = 1
-SHIFT_L = 1073742053
+IDLE_TICK = 30
 
 class Application():
     GRID_T_PADDING = 5
@@ -48,6 +48,8 @@ class Application():
     _game_speed: int
     _training: Optional[Generator]
     _session: int
+    _step_by_step: bool
+    _step_requested: bool
 
     def __init__(
         self,
@@ -73,6 +75,8 @@ class Application():
         self._status = AppStatus.STOP
         self._training = None
         self._session = 1 if session <= 0 else session
+        self._step_by_step = False
+        self._step_requested = False
         if mode == Mode.AI_TRAIN:
             self.__init_mode_ai_train()
         elif mode == Mode.AI_PLAY:
@@ -113,7 +117,8 @@ class Application():
         while self._status != AppStatus.STOP:
             if self._event_handler() == -1:
                 return -1
-            if self._status == AppStatus.PAUSE:
+            if self._status == AppStatus.PAUSE or not self._can_step():
+                clock.tick(IDLE_TICK)
                 continue
             if self._actual_mode == Mode.AI_TRAIN:
                 self._ai_train_step()
@@ -181,9 +186,27 @@ class Application():
 
     def _key_handler_ai_play(self, pressed_key: int) -> bool:
         match pressed_key:
-            case 1073742053: print('PASSAGE EN STEP BY STEP / PASSAGE EN CONTINUE')
+            case pygame.K_LSHIFT | pygame.K_RSHIFT: self.toggle_step_by_step()
+            case pygame.K_n: self.request_step()
             case _: return False
         return True
+
+    def toggle_step_by_step(self):
+        self._step_by_step = not self._step_by_step
+        self._step_requested = False
+        logger.info(f"Step by step: {'ON' if self._step_by_step else 'OFF'}")
+
+    def request_step(self):
+        if self._step_by_step:
+            self._step_requested = True
+
+    def _can_step(self) -> bool:
+        if not self._step_by_step:
+            return True
+        if self._step_requested:
+            self._step_requested = False
+            return True
+        return False
 
     def toggle_app_status(self):
         self._status = AppStatus.PLAY if self._status == AppStatus.PAUSE else AppStatus.PAUSE
@@ -234,7 +257,9 @@ class Application():
         except (SnakeLoose, SnakeWin) as exc:
             logger.info(f"Game Finished: {exc.message}, snake size: {self._env.snake.size}")
             self._status = AppStatus.STOP
-        except (SnakeGreenApple, SnakeRedApple):
+        except (SnakeGreenApple):
+            self._agent.got_positiv_reward()
+        except SnakeRedApple:
             pass
 
     def _print_map(self, map: List[str], width:int):

@@ -8,18 +8,18 @@ from utils.dataclass import (
 from utils.enum import Mode
 
 env_settings = EnvironmentSettings()
-env_settings.width = 16
-env_settings.height = 16
+env_settings.width = 10
+env_settings.height = 10
 env = Environment(env_settings)
 ag_settings = AgentSettings()
-ag_settings.agent_name = "test_functionnal_dql_12_5k"
+ag_settings.agent_name = "player"
 agent = AgentDQL(
     env=env,
     agent_settings=ag_settings,
     batch_size=10,
 )
 agent.load(
-    "test_functionnal_dql_12_5k"
+    "agent_dql500"
 )
 
 app = Application(
@@ -28,3 +28,13 @@ app = Application(
     mode=Mode.AI_PLAY
 )
 app.launch(session=1)
+
+# 1 - 3
+# 10 - 2
+# 100 - 2
+# 1000 - 4
+# 1500 - 26
+# 2000 - 28
+# 2500 - 34
+# 3000 - 43
+# 3500 - 48

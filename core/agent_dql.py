@@ -4,7 +4,6 @@ from mlp.core.model import Network
 from mlp.core.layer import Layer
 from mlp.ml_tools.optimizers import GradientDescent, ADAM
 from mlp.utils.types import ArrayF, FloatT
-from numpy import median
 from pickle import dump, load
 from random import SystemRandom
 from secrets import choice
@@ -110,7 +109,6 @@ class AgentDQL(Agent):
                 self._critical_loop()
                 if not self._step.accumulated_step % 150:
                     self._t_network = self._q_network.copy()
-                self._step.plus_one()
             logger.debug(f"Finished at {self._step.epoch_step}..")
             self._save_epoch()
 
@@ -128,10 +126,14 @@ class AgentDQL(Agent):
     def load(self, name: str):
         path_to_file_weight: str = f"{self.SAVE_FOLDER}/{name}_weight.pkl"
         path_to_file_biaises: str = f"{self.SAVE_FOLDER}/{name}_biaises.pkl"
-        with open(path_to_file_weight, "rb") as f:
-            self._q_network.weights = load(f)
-        with open(path_to_file_biaises, "rb") as f:
-            self._q_network.biaises = load(f)
+        try:
+            with open(path_to_file_weight, "rb") as f:
+                self._q_network.weights = load(f)
+            with open(path_to_file_biaises, "rb") as f:
+                self._q_network.biaises = load(f)
+        except Exception as exc:
+            logger.error(f"Error during opening file: {exc}")
+            raise exc
 
     @override
     def save(self):
@@ -159,33 +161,10 @@ class AgentDQL(Agent):
     def _reset_epoch(self):
         return super()._reset_epoch()
 
-    def _evaluation(self, lap: int) -> FloatT:
-        result: List[int] = []
-        for _ in range(lap):
-            self._env.reset()
-            step: int = 0
-            while step < 700:
-                action = self.take_action()
-                try:
-                    self._env.change_move(action, from_ia=True)
-                    self._env.update()
-                except (SnakeLoose, SnakeWin):
-                    break
-                except (SnakeGreenApple, SnakeRedApple):
-                    pass
-                step += 1
-            result.append(self._env.snake.size)
-        result_median: FloatT = median(result)
-        logger.info(f"Median score: {result_median}")
-        return result_median
-
     def _critical_loop(self):
         act_state: List[FloatT] = self._state.copy()
         idx_move: int = self._define_move()
         reward: FloatT = self._get_reward(idx_move)
-        if (self._step.epoch_step - self._last_reward_at) > self.WITHOUT_REWARD_THRESHOLD and reward == self.reward_nothing:
-            reward = self.reward_red_apple
-            self._last_reward_at = self._step.epoch_step
         self._store_experience(
             act_state,
             self._state,
@@ -203,14 +182,19 @@ class AgentDQL(Agent):
         self,
         random_action: bool = False
     ) -> int:
+        force_random: bool = (self._step.epoch_step - self._last_reward_at) > self.WITHOUT_REWARD_THRESHOLD
         allowed: List[int] = self._allowed_moves()
-        if random_action == True:
+        if random_action == True or force_random == True:
+            if force_random:
+                logger.info("Random forced: Too much steps without reward")
+                self._last_reward_at = self._step.epoch_step
             return choice(allowed)
         q_values: ArrayF = self._q_network.fire.full(
             input=self._state,
             weights=self._q_network.weights,
             biaises=self._q_network.biaises
         )
+        self._step.plus_one()
         return max(allowed, key=lambda i: q_values[i])
 
     def _store_experience(

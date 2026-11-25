@@ -25,13 +25,13 @@ hp_settings = HyperParameters()
 hp_settings.discount = 0.95
 hp_settings.exploration_rate = 1.
 hp_settings.learning_rate = 0.05
-hp_settings.max_action = 1000
-hp_settings.epoch = 100000
+hp_settings.max_action = 10000
+hp_settings.epoch = 75000
 hp_settings.exploration_min = 0.02
-hp_settings.exploration_frac = (hp_settings.exploration_rate - hp_settings.exploration_min) / (0.3 * hp_settings.epoch)
+hp_settings.exploration_frac = (hp_settings.exploration_rate - hp_settings.exploration_min) / (0.5 * hp_settings.epoch)
 
 agg_settings = AgentSettings()
-agg_settings.agent_name = "test_agent_100k"
+agg_settings.agent_name = "agent_ql_75000"
 agg_settings.hyper_params = hp_settings
 agg_settings.rewards = rw_settings
 

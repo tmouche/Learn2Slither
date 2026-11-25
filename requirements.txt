@@ -4,3 +4,4 @@ pandas
 plotly
 pydantic==2.14.2
 pygame-ce==2.5.8
+./mlp_package/dist/mlp-1.0.11.tar.gz

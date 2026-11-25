@@ -1,18 +1,15 @@
 from abc import abstractmethod
 from core.environment import Environment
-from datetime import datetime
-from math import log
-from mlp.utils.types import ArrayF, FloatT
-from numpy import mean, ndarray
+from mlp.utils.types import FloatT
+from numpy import mean, median, ndarray
 from pandas import DataFrame, Series, read_csv
 from plotly.graph_objects import Figure
 from secrets import randbelow
 from typing import List, Dict, Generator, Optional, Tuple
 from utils.dataclass import AgentSettings, Step
-from utils.constant import EPS, RAND_MAX
+from utils.constant import RAND_MAX
 from utils.enum import Movement
 from utils.exception import (
-    SnakeImpossibleMove,
     SnakeGreenApple,
     SnakeLoose,
     SnakeLooseTail,
@@ -235,6 +232,9 @@ class Agent:
         self._plot_reward()
         self._plot_snake_len()
 
+    def got_positiv_reward(self):
+        self._last_reward_at = self._step.epoch_step
+
     def _get_reward(self, idx_move: int) -> FloatT:
         reward: FloatT = self._reward_nothing
         try:
@@ -258,7 +258,7 @@ class Agent:
         if not self._done:
             self._state = self._retrieve_state_from_env()
         if reward >= 0:
-            self._last_reward_at = self._step.epoch_step
+            self.got_positiv_reward()
         return reward
 
     def _reset_training(self):
@@ -336,6 +336,27 @@ class Agent:
             case 'R':
                 data['ra_dist'][data_idx] = idx
         return False
+
+    def _evaluation(self, lap: int) -> FloatT:
+        result: List[int] = []
+        for _ in range(lap):
+            self._env.reset()
+            step: int = 0
+            while step < 700:
+                action = self.take_action()
+                try:
+                    self._env.change_move(action, from_ia=True)
+                    self._env.update()
+                except (SnakeLoose, SnakeWin):
+                    break
+                except (SnakeGreenApple, SnakeRedApple):
+                    pass
+                step += 1
+            result.append(self._env.snake.size)
+        result_median: FloatT = median(result)
+        logger.info(f"Median score: {result_median}")
+        logger.info(f"Max score: {max(result)}")
+        return result_median
 
     def _plot_death(self):
         wall_death: List[int] = self._acc_list(self._wall_hit)
