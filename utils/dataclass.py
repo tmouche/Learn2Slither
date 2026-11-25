@@ -1,19 +1,21 @@
-from pydantic.dataclasses import dataclass
 from typing import Optional
 from utils.types import FloatT
 
+
 class EnvironmentSettings:
-    height:int
-    width:int
+    height: int
+    width: int
+
 
 class HyperParameters:
     discount: FloatT
-    exploration_frac: FloatT  # valeur soustraite a epsilon a chaque epoch (decroissance lineaire)
-    exploration_min: FloatT   # plancher d'epsilon
+    exploration_frac: FloatT
+    exploration_min: FloatT
     exploration_rate: FloatT
     epoch: int
     learning_rate: FloatT
     max_action: int
+
 
 class RewardSettings:
     green_apple: FloatT
@@ -22,14 +24,17 @@ class RewardSettings:
     red_apple: FloatT
     win: FloatT
 
+
 class AgentSettings:
     hyper_params: Optional[HyperParameters] = None
     rewards: Optional[RewardSettings] = None
     agent_name: str = "default"
 
+
 class TrainingNew:
     env_params: EnvironmentSettings
     agent_params: AgentSettings
+
 
 class Step:
     _epoch_step: int

@@ -1,5 +1,3 @@
-from typing import List
-
 EPS = 10e-8
 
 POSITIV = [1, 0]
@@ -8,10 +6,9 @@ FOLDER_NET_SAVE = "network_save"
 
 RAND_MAX = 100
 
-#environment
+# environment
 MAX_HEIGHT = 1000
 MAX_WIDTH = 1000
 NUM_START_GREEN_APPLE = 2
 NUM_START_RED_APPLE = 1
 SIZE_START_SNAKE = 3
-

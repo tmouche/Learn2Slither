@@ -12,16 +12,11 @@ from utils.dataclass import (
 from utils.enum import Movement
 from collections import deque
 from itertools import islice
-from typing import Sequence, List, Dict
+from typing import List, Dict
 from random import randint
-from abc import abstractmethod
-
-from utils.logger import logger
-
 from utils.exception import (
     MapToLarge,
     MapToSmall,
-    SnakeImpossibleMove,
     SnakeLooseSize,
     SnakeLooseWall,
     SnakeLooseTail,
@@ -32,18 +27,17 @@ from utils.exception import (
 
 
 class Snake:
-    pos: deque[int]
-
-    size: int
-
     START_POS: int
     START_SIZE: int
+
+    pos: deque[int]
+    size: int
 
     def __init__(self, start_pos: int, start_size: int):
         self.START_POS = start_pos
         self.START_SIZE = start_size
         self.reset()
-        
+
     def reset(self):
         self.pos = deque()
         for _ in range(self.START_SIZE):
@@ -58,10 +52,14 @@ class Snake:
         self.pos.pop()
         self.size -= 1
 
-    def collision(self, check_pos: int, exclude_head: bool = False) -> bool:
+    def collision(
+        self,
+        check_pos: int,
+        exclude_head: bool = False
+    ) -> bool:
         reference: deque[int] = self.pos
-        if exclude_head == True:
-            reference = list(islice(reference, 1, len(reference))) 
+        if exclude_head:
+            reference = list(islice(reference, 1, len(reference)))
         if check_pos in reference:
             return True
         return False
@@ -69,7 +67,6 @@ class Snake:
     def moove(self, next_head_pos: int):
         self.pos.appendleft(next_head_pos)
         self.pos.pop()
-
 
 
 class Basket:
@@ -95,55 +92,45 @@ class Basket:
 
 
 class Environment:
-    width:int
-    height:int
-
+    width: int
+    height: int
     map: List[str]
-
     green_apple: Basket
     red_apple: Basket
-
     snake: Snake
     direction: str
-
     actual_move: Movement
-    map_move: Dict[Movement, int] 
+    map_move: Dict[Movement, int]
     move_counted: bool
-
     game_ground_size: int
-
     step: int
 
     def __init__(self, settings: EnvironmentSettings):
-        
         if settings.width > MAX_WIDTH or settings.height > MAX_HEIGHT:
             raise MapToLarge()
         elif settings.width <= 5 or settings.height <= 5:
             raise MapToSmall()
-
         self.width = settings.width + 2
         self.height = settings.height + 2
-
-        self.game_ground_size = self.width*self.height - (2*self.width) - (2*self.height) - 8
+        self.game_ground_size = (
+            self.width*self.height - (2*self.width) - (2*self.height) - 8
+        )
         self.__init_map_move()
-        
         self.map = ['O' for _ in range(self.width * self.height)]
-
         self.green_apple = Basket()
         self.red_apple = Basket()
-        self.snake = Snake(start_pos=self._calc_snake_first_pos(), start_size=SIZE_START_SNAKE)
-
+        self.snake = Snake(
+            start_pos=self._calc_snake_first_pos(),
+            start_size=SIZE_START_SNAKE
+        )
         self.actual_move = Movement.DOWN
         self.move_counted = True
-
         self.step = 0
-
         for _ in range(NUM_START_GREEN_APPLE):
             self.new_green_apple()
         for _ in range(NUM_START_RED_APPLE):
             self.new_red_apple()
         self._update_map()
-
 
     def __init_map_move(self):
         self.map_move = {}
@@ -154,22 +141,17 @@ class Environment:
 
     def reset(self):
         self.map = ['O' for _ in range(self.width * self.height)]
-
         self.green_apple.reset()
         self.red_apple.reset()
         self.snake.reset()
-
         self.actual_move = Movement.DOWN
         self.move_counted = True
-
         self.step = 0
-
         for _ in range(2):
             self.new_green_apple()
         for _ in range(1):
             self.new_red_apple()
         self._update_map()
-
 
     def update(self):
         self.step += 1
@@ -195,14 +177,25 @@ class Environment:
 
     def move(self):
         coef_move: int = self.map_move[self.actual_move]
-        next_pos:int = self.snake.pos[0] + coef_move
+        next_pos: int = self.snake.pos[0] + coef_move
         self.snake.moove(next_pos)
 
     def change_move(self, next_move: Movement, from_ia: bool = False):
-        is_move_opposit_to_last: bool = self.map_move[self.actual_move] + self.map_move[next_move] == 0
-        if ((is_move_opposit_to_last == True and self.move_counted == True) and from_ia == True):
+        is_move_opposit_to_last: bool = (
+            self.map_move[self.actual_move]
+            + self.map_move[next_move]
+            == 0
+        )
+        if (
+            is_move_opposit_to_last
+            and self.move_counted
+            and from_ia
+        ):
             raise SnakeLooseTail()
-        if ((is_move_opposit_to_last == False and self.move_counted == True) or from_ia == True):
+        if (
+            (is_move_opposit_to_last and self.move_counted)
+            or from_ia
+        ):
             self.actual_move = next_move
             self.move_counted = False
 
@@ -225,19 +218,22 @@ class Environment:
             self.new_red_apple()
             self._update_map()
             raise SnakeRedApple()
-        elif self.is_wall(pos_to_check) is True:
+        elif self.is_wall(pos_to_check):
             raise SnakeLooseWall()
-        elif self.snake.collision(pos_to_check, exclude_head=True) is True and self.step > 3:
+        elif (
+            self.snake.collision(pos_to_check, exclude_head=True)
+            and self.step > 3
+        ):
             raise SnakeLooseTail()
         else:
             self._update_map()
 
-    def check_collision(self, next_pos:int) -> bool:
+    def check_collision(self, next_pos: int) -> bool:
         if (
-            self.green_apple.collision(next_pos) is True or
-            self.red_apple.collision(next_pos) is True or
-            self.is_wall(next_pos) is True or
-            self.snake.collision(next_pos) is True
+            self.green_apple.collision(next_pos) or
+            self.red_apple.collision(next_pos) or
+            self.is_wall(next_pos) or
+            self.snake.collision(next_pos)
         ):
             return True
         return False
@@ -254,13 +250,13 @@ class Environment:
 
     def new_green_apple(self):
         next_pos: int = randint(0, len(self.map))
-        while self.check_collision(next_pos) == True:
+        while self.check_collision(next_pos):
             next_pos: int = randint(0, len(self.map))
         self.green_apple.pos.append(next_pos)
 
     def new_red_apple(self):
         next_pos: int = randint(0, len(self.map))
-        while self.check_collision(next_pos) == True:
+        while self.check_collision(next_pos):
             next_pos: int = randint(0, len(self.map))
         self.red_apple.pos.append(next_pos)
 
@@ -277,7 +273,6 @@ class Environment:
             else:
                 vision.append(' ')
         return vision
-    
+
     def _calc_snake_first_pos(self) -> int:
         return (self.height // 2) * self.width + self.width // 2
-    

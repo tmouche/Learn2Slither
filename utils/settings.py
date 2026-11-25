@@ -3,6 +3,7 @@ from typing import Optional
 from utils.logger import logger
 import os
 
+
 class Settings:
 
     DQL: str = "dql"
@@ -34,20 +35,39 @@ class Settings:
     def _parse(self):
         parser = ArgumentParser(
             prog="snake",
-            description="Reinforcement Learning project implementing a snake game." 
+            description="Reinforcement Learning project \
+                implementing a snake game."
         )
-        parser.add_argument("--visual", action="store_true", default=False)
-        parser.add_argument("--train", type=str)
-        parser.add_argument("--load", type=str)
-        parser.add_argument("--session", type=int, default=1)
-        parser.add_argument("--agent", type=str, choices=['dql', 'ql'], default='ql')
+        parser.add_argument(
+            "--visual",
+            action="store_true",
+            default=False
+        )
+        parser.add_argument(
+            "--train",
+            type=str
+        )
+        parser.add_argument(
+            "--load",
+            type=str
+        )
+        parser.add_argument(
+            "--session",
+            type=int,
+            default=1
+        )
+        parser.add_argument(
+            "--agent",
+            type=str,
+            choices=['dql', 'ql'],
+            default='ql'
+        )
         self._args = parser.parse_args()
         self._parse_visual()
         self._parse_train()
         self._parse_load()
         self._parse_session()
         self._parse_agent()
-
 
     def _parse_visual(self):
         self.visual = self._args.visual

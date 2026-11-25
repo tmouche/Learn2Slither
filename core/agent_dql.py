@@ -18,6 +18,7 @@ import numpy as np
 
 TD_CLIP: FloatT = 1.
 
+
 @dataclass
 class Experience:
     state: List[FloatT]
@@ -27,6 +28,7 @@ class Experience:
     done: bool
     label: Optional[List[FloatT]] = None
     td_error: Optional[FloatT] = 0.
+
 
 class ReplayBuffer:
     _size: int
@@ -52,7 +54,11 @@ class ReplayBuffer:
     def sample(self, batch_size: int) -> List[Experience]:
         if batch_size < 0:
             raise ValueError("batch_size has to be > to 0")
-        real_size: int = batch_size if batch_size <= len(self._buffer) else len(self._buffer)
+        real_size: int = (
+            batch_size
+            if batch_size <= len(self._buffer)
+            else len(self._buffer)
+        )
         priorities = np.array([xp.td_error for xp in self._buffer]) ** 0.6
         probabilities: List[FloatT] = priorities / np.sum(priorities)
         sample_idx: List[int] = self._generator.choice(
@@ -66,7 +72,7 @@ class AgentDQL(Agent):
 
     _exp_replay: ReplayBuffer
     _q_network: Network
-    _t_network: Network    
+    _t_network: Network
     _batch_size: int
     _optimizer: ADAM
     _acc_step: int
@@ -78,10 +84,22 @@ class AgentDQL(Agent):
         self._q_network = Network(
             layers=[
                 Layer(shape=12),
-                Layer(shape=32, activation="LeakyReLu", initializer="he_normal"),
-                Layer(shape=4, activation="Nothing", initializer="xavier_normal")
+                Layer(
+                    shape=32,
+                    activation="LeakyReLu",
+                    initializer="he_normal"
+                ),
+                Layer(
+                    shape=4,
+                    activation="Nothing",
+                    initializer="xavier_normal"
+                )
             ],
-            learning_rate=self.learning_rate if self.learning_rate is not None else 1,
+            learning_rate=(
+                self.learning_rate
+                if self.learning_rate is not None
+                else 1
+            ),
             batch_size=self._batch_size,
             loss_function="mean_square_error"
         )
@@ -99,7 +117,7 @@ class AgentDQL(Agent):
             self._reset_epoch()
             while (
                 self._step.epoch_step < self._max_action
-                and self._done == False
+                and not self._done
             ):
                 self._critical_loop()
                 if not self._step.accumulated_step % 150:
@@ -112,19 +130,22 @@ class AgentDQL(Agent):
         self._reset_training()
         while self._epoch < self._epoch_max:
             self._reset_epoch()
-            while self._step.epoch_step < self._max_action and self._done == False:
+            while (
+                self._step.epoch_step < self._max_action
+                and not self._done
+            ):
                 self._critical_loop()
                 yield
             self._save_epoch()
 
     @override
     def load(self, name: str):
-        path_to_file_weight: str = f"{self.SAVE_FOLDER}/{name}_weight.pkl"
-        path_to_file_biaises: str = f"{self.SAVE_FOLDER}/{name}_biaises.pkl"
+        path_to_weight: str = f"{self.SAVE_FOLDER}/{name}_weight.pkl"
+        path_to_biaises: str = f"{self.SAVE_FOLDER}/{name}_biaises.pkl"
         try:
-            with open(path_to_file_weight, "rb") as f:
+            with open(path_to_weight, "rb") as f:
                 self._q_network.weights = load(f)
-            with open(path_to_file_biaises, "rb") as f:
+            with open(path_to_biaises, "rb") as f:
                 self._q_network.biaises = load(f)
         except Exception as exc:
             logger.error(f"Error during opening file: {exc}")
@@ -132,24 +153,27 @@ class AgentDQL(Agent):
 
     @override
     def save(self):
-        path_to_file_weight: str = f"{self.SAVE_FOLDER}/{self.name}_weight.pkl"
-        path_to_file_biaises: str = f"{self.SAVE_FOLDER}/{self.name}_biaises.pkl"
+        path_to_weight: str = f"{self.SAVE_FOLDER}/{self.name}_weight.pkl"
+        path_to_biaises: str = f"{self.SAVE_FOLDER}/{self.name}_biaises.pkl"
         try:
             os.mkdir(self.SAVE_FOLDER)
         except FileExistsError:
             pass
         except Exception as exc:
-            logger.error(f'An unexpected error is happened on creating save folder: {exc}')
+            logger.error(
+                f'An unexpected error is happened \
+                on creating save folder: {exc}'
+            )
             raise AgentFileSave("")
-        with open(path_to_file_weight, "wb") as f:
+        with open(path_to_weight, "wb") as f:
             dump(self._q_network.weights, f)
-        with open(path_to_file_biaises, "wb") as f:
+        with open(path_to_biaises, "wb") as f:
             dump(self._q_network.biaises, f)
 
     @override
     def take_action(self) -> Movement:
         self._state = self._retrieve_state_from_env()
-        idx_move:int = self._policy()
+        idx_move: int = self._policy()
         return list(Movement)[idx_move]
 
     @override
@@ -169,7 +193,9 @@ class AgentDQL(Agent):
         self._update_network()
 
     def _define_move(self):
-        random_action: bool = self.rand_int(100) < (self._explo_rate_in_use * 100)
+        random_action: bool = (
+            self.rand_int(100) < (self._explo_rate_in_use * 100)
+        )
         idx_move: int = self._policy(random_action)
         return idx_move
 
@@ -177,9 +203,14 @@ class AgentDQL(Agent):
         self,
         random_action: bool = False
     ) -> int:
-        force_random: bool = (self._step.epoch_step - self._last_reward_at) > self.WITHOUT_REWARD_THRESHOLD
+        force_random: bool = (
+            (
+                self._step.epoch_step -
+                self._last_reward_at
+            ) > self.WITHOUT_REWARD_THRESHOLD
+        )
         allowed: List[int] = self._allowed_moves()
-        if random_action == True or force_random == True:
+        if random_action or force_random:
             if force_random:
                 self._last_reward_at = self._step.epoch_step
             return choice(allowed)
@@ -213,9 +244,9 @@ class AgentDQL(Agent):
         dataset: List[Dict[str, List[FloatT]]] = self._batch_experience()
         if dataset:
             self._optimizer.full(dataset)
-        
+
     def _batch_experience(
-        self,    
+        self,
     ) -> List[Dict[str, List[FloatT]]]:
         experiences_batch: List[Dict[str, List[FloatT]]] = []
         for xp in self._exp_replay.sample(self._batch_size):
@@ -224,7 +255,7 @@ class AgentDQL(Agent):
             data_dict["data"] = xp.state
             data_dict["label"] = xp.label
             experiences_batch.append(data_dict)
-        return  experiences_batch
+        return experiences_batch
 
     def _create_experience(
         self,
@@ -252,7 +283,7 @@ class AgentDQL(Agent):
             biaises=self._q_network.biaises
         )
         out_tnet: List[FloatT] = self._t_network.fire.full(
-            input=experience.next_state, 
+            input=experience.next_state,
             weights=self._t_network.weights,
             biaises=self._t_network.biaises
         )
@@ -267,5 +298,7 @@ class AgentDQL(Agent):
             td_target += (self.discount * out_tnet[a_next])
         td_diff: FloatT = td_target - out_qnet[experience.action]
         experience.td_error = min(abs(td_diff), TD_CLIP) + EPS
-        out_qnet[experience.action] += float(np.clip(td_diff, -TD_CLIP, TD_CLIP))
+        out_qnet[experience.action] += float(
+            np.clip(td_diff, -TD_CLIP, TD_CLIP)
+        )
         experience.label = out_qnet

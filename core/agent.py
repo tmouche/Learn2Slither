@@ -242,8 +242,10 @@ class Agent:
         except SnakeLoose as exc:
             reward = self._reward_lose
             self._done = True
-            if exc is SnakeLooseWall: self._wall_hit[self._epoch] = 1
-            elif exc is SnakeLooseTail: self._snake_hit[self._epoch] = 1
+            if exc is SnakeLooseWall:
+                self._wall_hit[self._epoch] = 1
+            elif exc is SnakeLooseTail:
+                self._snake_hit[self._epoch] = 1
         except SnakeRedApple:
             reward = self._reward_red_apple
             self._red_apple += 1
@@ -278,7 +280,9 @@ class Agent:
         self._red_apple = 0
         self._done = False
         self._state = self._retrieve_state_from_env()
-        self._explo_rate_in_use = max(self.explo_min ,self._explo_rate_in_use - self._explo_frac)
+        self._explo_rate_in_use = max(
+            self.explo_min, self._explo_rate_in_use - self._explo_frac
+        )
         self._step.reset_epoch()
         self._last_reward_at = 0
 
@@ -288,12 +292,18 @@ class Agent:
         self._snake_len_history[e] = self._env.snake.size
         self._green_apple_history[e] = self._green_apple
         self._red_apple_history[e] = self._red_apple
-        logger.info(f"Epoch {self._epoch} -> Reward: {round(self._acc_reward, 2)}, Snake size: {self._env.snake.size}")
+        logger.info(f"Epoch {self._epoch} -> \
+            Reward: {round(self._acc_reward, 2)}, \
+            Snake size: {self._env.snake.size}")
         self._epoch += 1
 
     def _retrieve_state_from_env(self) -> List[float]:
         state_data: Dict[str, List[int]] = self._retrieve_state_data()
-        return [round(1. / d, 2) if d else 0. for v in state_data.values() for d in v]
+        return [
+            round(1. / d, 2)
+            if d else 0.
+            for v in state_data.values() for d in v
+        ]
 
     def _retrieve_state_data(self) -> Dict[str, List[int]]:
         snake_view: List[str] = self._env.snake_view()
@@ -312,9 +322,13 @@ class Agent:
                 if self._check_state_value(
                     state_data,
                     i,
-                    snake_view[int(head_pos + idx * list(self._env.map_move.values())[i])],
+                    snake_view[
+                        int(head_pos + idx * list(
+                            self._env.map_move.values()
+                        )[i])
+                    ],
                     idx,
-                ) == True:
+                ):
                     threated.append(i)
             idx += 1
         return state_data
@@ -325,7 +339,7 @@ class Agent:
             data_idx: int,
             current: str,
             idx: int
-        ):
+    ):
         match current:
             case 'W' | 'S':
                 data['d_dist'][data_idx] = idx
@@ -372,7 +386,7 @@ class Agent:
             labels={"data": "death"}
         )
         self._save_plot(fig, "death")
-    
+
     def _plot_apple(self):
         green_apple: List[int] = self._green_apple_history
         red_apple: List[int] = self._red_apple_history
@@ -388,7 +402,7 @@ class Agent:
             labels={"data": "apple"}
         )
         self._save_plot(fig, "apple")
-    
+
     def _plot_reward(self):
         reward: List[int] = self._reward_history
         df = DataFrame()
@@ -398,7 +412,7 @@ class Agent:
             x=df.index, y='reward'
         )
         self._save_plot(fig, "reward")
-    
+
     def _plot_snake_len(self):
         snake_len: List[int] = self._snake_len_history
         df = DataFrame()
@@ -408,33 +422,38 @@ class Agent:
             x=df.index, y="snake_len"
         )
         self._save_plot(fig, "snake_len")
-    
+
     def _save_plot(self, fig: Figure, plot_name: str):
-        fig.write_html(f"{self.PLOT_FOLDER}/{self.name}/{plot_name}.html", auto_open=True)
-    
+        fig.write_html(
+            f"{self.PLOT_FOLDER}/{self.name}/{plot_name}.html",
+            auto_open=True
+        )
+
     @staticmethod
     def _acc_list(source: List) -> List:
         acc: List = []
-        if not len(source): return acc 
+        if not len(source):
+            return acc
         acc.append(source[0])
         for i in range(1, len(source)):
             acc.append(acc[i - 1] + source[i])
         return acc
-    
+
     @staticmethod
     def _acc_list_mean(source: List) -> List:
         acc_mean: List = []
-        if not len(source): return acc_mean
+        if not len(source):
+            return acc_mean
         acc_mean.append(source[0])
         for i in range(1, len(source)):
             acc_mean.append(mean(source[:i]))
         return acc_mean
 
     @staticmethod
-    def print_map(map: List[str], width:int):
+    def print_map(map: List[str], width: int):
         logger.info('\n')
         for i in range(len(map)):
-            print(map[i],end="")
+            print(map[i], end="")
             if not (i+1) % width and i:
                 print()
         print()
@@ -450,7 +469,10 @@ class Agent:
 
     def _allowed_moves(self) -> List[int]:
         current: int = self._env.map_move[self._env.actual_move]
-        return [i for i, move in enumerate(Movement) if self._env.map_move[move] + current != 0]
+        return [
+            i for i, move in enumerate(Movement)
+            if self._env.map_move[move] + current != 0
+        ]
 
     @staticmethod
     def create_map_action():

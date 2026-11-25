@@ -1,4 +1,3 @@
-from app.application import Application
 from core.agent_dql import AgentDQL
 from core.environment import Environment
 from utils.dataclass import (
@@ -7,7 +6,6 @@ from utils.dataclass import (
     HyperParameters,
     RewardSettings,
 )
-from utils.enum import Mode
 
 env_settings = EnvironmentSettings()
 env_settings.width = 10
@@ -28,7 +26,12 @@ hp_settings.learning_rate = 2.37e-03
 hp_settings.max_action = 10000
 hp_settings.epoch = 3000
 hp_settings.exploration_min = 0.05
-hp_settings.exploration_frac = (hp_settings.exploration_rate - hp_settings.exploration_min) / (0.45 * hp_settings.epoch)
+hp_settings.exploration_frac = (
+    (
+        hp_settings.exploration_rate -
+        hp_settings.exploration_min
+    ) / (0.45 * hp_settings.epoch)
+)
 
 agg_settings = AgentSettings()
 agg_settings.agent_name = "agent_dql_3000"
@@ -37,8 +40,6 @@ agg_settings.rewards = rw_settings
 
 agent = AgentDQL(env=env, agent_settings=agg_settings, batch_size=10)
 
-# app = Application(game_env=env, mode=Mode.AI_TRAIN, agent=agent)
-# app.launch(session=1)
 agent.train()
 agent.save()
 agent.save_training_metrics()

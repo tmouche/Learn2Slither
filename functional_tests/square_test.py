@@ -7,7 +7,7 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-square = Square(size=50, pos=[500,250], color="red")
+square = Square(size=50, pos=[500, 250], color="red")
 
 while running:
     for event in pygame.event.get():

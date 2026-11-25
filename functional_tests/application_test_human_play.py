@@ -10,4 +10,3 @@ env_settings.height = 10
 env = Environment(env_settings)
 app = Application(game_env=env)
 app.launch()
-

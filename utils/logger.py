@@ -1,4 +1,3 @@
-
 class LoggerL2S:
 
     _instance = None
@@ -7,7 +6,7 @@ class LoggerL2S:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def debug(self, msg):
         print(f"[DEBUG] -> {msg}")
 
@@ -19,5 +18,6 @@ class LoggerL2S:
 
     def warning(self, msg):
         print(f"[WARNING] -> {msg}")
+
 
 logger = LoggerL2S()
