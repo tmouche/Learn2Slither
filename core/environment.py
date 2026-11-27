@@ -193,7 +193,7 @@ class Environment:
         ):
             raise SnakeLooseTail()
         if (
-            (is_move_opposit_to_last and self.move_counted)
+            (not is_move_opposit_to_last and self.move_counted)
             or from_ia
         ):
             self.actual_move = next_move
